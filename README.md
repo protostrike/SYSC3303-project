@@ -13,6 +13,10 @@ Testing: Using three different ports on ONE PC for testing (22,23,24)
 
 Qingchen(Alex): Test cases, UML, documetation
 
-Mohamad, Aryan: Three subsystem classes
+Mohamad: Floor 
 
-The rest of people: discuss this further
+Aryan: Scheduler
+
+Chengyang: Elevator
+
+Reginald: Support(For now)
