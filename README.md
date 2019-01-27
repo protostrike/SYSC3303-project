@@ -19,4 +19,4 @@ Aryan: Scheduler
 
 Chengyang: Elevator
 
-Reginald: Support(For now)
+Reginald: Graphical User Interface (GUI)
