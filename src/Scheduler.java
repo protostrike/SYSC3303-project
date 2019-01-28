@@ -7,6 +7,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.LinkedList;
 
 public class Scheduler {
@@ -14,7 +15,19 @@ public class Scheduler {
    DatagramPacket  floorPacket, elevatorPacket;
    DatagramSocket floorSocket, elevatorSocket;
    LinkedList<Person> personList = new LinkedList<Person>();
-   byte[] statusByte = {(byte)0,(byte)1};
+   byte[] statusByte = {(byte)0};
+   byte[] moveUpCommandByte = {(byte)1};
+   byte[] moveDownCommandByte = {(byte)2};
+   byte[] StartEngineCommandByte = {(byte)3};
+   byte[] StopEngineCommandByte = {(byte)4};
+   byte[] openDoorCommandByte = {(byte)5};
+   byte[] closeDoorCommandByte = {(byte)6};
+   byte[] turnLampOnCommandByte = {(byte)7};
+   byte[] turnLampOffCommandByte = {(byte)8};
+   Calendar cal;
+   int currentFloor;
+   LinkedList<Integer> destinationList = new LinkedList<Integer>();
+
    
    private Object convertFromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
 	    try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
@@ -31,6 +44,7 @@ public class Scheduler {
          // send UDP Datagram packets.
          elevatorSocket = new DatagramSocket();
 
+
          // Construct a datagram socket and bind it to port 5000 
          // on the local host machine. This socket will be used to
          // receive UDP Datagram packets.
@@ -44,60 +58,58 @@ public class Scheduler {
       } 
    }
 
-   public void receiveAndEcho()
+
+   public synchronized void personArrivale()
    {
-      // Construct a DatagramPacket for receiving packets up 
-      // to 100 bytes long (the length of the byte array).
-
-      byte data[] = new byte[1000];
-      floorPacket = new DatagramPacket(data, data.length);
-      System.out.println("Server: Waiting for Packet.\n");
-
-      // Block until a datagram packet is received from receiveSocket.
-      try {        
-         System.out.println("Waiting..."); // so we know we're waiting
-         floorSocket.receive(floorPacket);
-      } catch (IOException e) {
-         System.out.print("IO Exception: likely:");
-         System.out.println("Receive Socket Timed Out.\n" + e);
-         e.printStackTrace();
-         System.exit(1);
-      }
-
-      // Process the received datagram.
-      System.out.println("Server: Packet received:");
-      System.out.println("From host: " + floorPacket.getAddress());
-      System.out.println("Host port: " + floorPacket.getPort());
-      int len = floorPacket.getLength();
-      System.out.println("Length: " + len);
-      System.out.print("Containing: " );
-
-
-      Person person = new Person();
+	   byte data[] = new byte[1000];
+	   floorPacket = new DatagramPacket(data, data.length);
+	   //System.out.println("Server: Waiting for Packet again.\n");
+       try {
+       floorSocket.setSoTimeout(2);
+	   try {
+	   		floorSocket.receive(floorPacket);
+	   } catch (IOException e) {
+			// Some kind of IO Exception
+		   return;
+			//e.printStackTrace();
+	   }
+       } catch (SocketException e2) {
+		//2 ms has passed and there is no new Person, therefore WAIT!
+		try {
+			wait();
+			return;
+		} catch (InterruptedException e) {
+			
+			//e.printStackTrace();
+		}
+		
+       }
       
-      try {
-		person = (Person) convertFromBytes(data);
-	} catch (ClassNotFoundException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	} catch (IOException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	}
+       // Process the received datagram.
+       System.out.println("Request For Elevator received:");
+
+       int len = floorPacket.getLength();
+       Person person = new Person();
+      
+       try {
+    	   person = (Person) convertFromBytes(data);
+       } catch (ClassNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
       
       System.out.println(person);
-      personList.add(person);
- 
       
-
+      
+      
+      ////////////////////////////////////////////////////
       try {
-		elevatorPacket = new DatagramPacket(statusByte, statusByte.length,
-				  InetAddress.getLocalHost(), 5005);
-	} catch (UnknownHostException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	}
-
+  		elevatorPacket = new DatagramPacket(statusByte, statusByte.length,
+  				  InetAddress.getLocalHost(), 5005);
+  	} catch (UnknownHostException e1) {
+  		e1.printStackTrace();
+  	}
       System.out.println( "Server: Sending packet:");
       System.out.println("To host: " + elevatorPacket.getAddress());
       System.out.println("Destination host port: " + elevatorPacket.getPort());
@@ -105,8 +117,6 @@ public class Scheduler {
       System.out.println("Length: " + len);
       System.out.print("Containing: ");
       System.out.println(new String(elevatorPacket.getData(),0,len));
-      // or (as we should be sending back the same thing)
-      // System.out.println(received); 
         
       // Send the datagram packet to the elevator via the send socket. 
       try {
@@ -118,10 +128,15 @@ public class Scheduler {
 
       System.out.println("Server: status asked from Elevator");
       System.out.println("Server: Waiting for status of elevator.\n");
+		try {
+			elevatorPacket = new DatagramPacket(data, data.length,
+					  InetAddress.getLocalHost(), 5005);
+		} catch (UnknownHostException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
 
-      // Block until a datagram packet is received from receiveSocket.
-      //data = null;
-      elevatorPacket = new DatagramPacket(data, data.length);
+
       try {        
          System.out.println("Waiting..."); // so we know we're waiting
          elevatorSocket.receive(elevatorPacket);
@@ -133,9 +148,7 @@ public class Scheduler {
       }
 
       // Process the received datagram.
-      System.out.println("Server: Packet received:");
-      System.out.println("From host: " + elevatorPacket.getAddress());
-      System.out.println("Host port: " + elevatorPacket.getPort());
+      System.out.println("Status received:");
       len = elevatorPacket.getLength();
       System.out.println("Length: " + len);
       System.out.print("Containing: " );
@@ -155,16 +168,128 @@ public class Scheduler {
 		e1.printStackTrace();
 	}
       
-      System.out.println(status);
-        
       
+      System.out.println(status);
+      
+      if (! status.isInUse())
+      {
+    	  this.currentFloor = status.getCurrentFloor();
+    	  this.destinationList.add(person.getDestFloor());
+    	  
+    	  System.out.println("elevator is coming right away");
+    	  
+    	  System.out.println( "Sending packet To the elevator:");
 
+    	  if(currentFloor == person.originFloor)
+    	  {
+        	  try {
+				elevatorPacket = new DatagramPacket(this.openDoorCommandByte, openDoorCommandByte.length
+						,InetAddress.getLocalHost(), 5005);
+        	  } catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+        	  }
+              try {
+                 elevatorSocket.send(elevatorPacket);
+              } catch (IOException e) {
+                 e.printStackTrace();
+                 System.exit(1);
+              }
+        	  try {
+				elevatorPacket = new DatagramPacket(this.closeDoorCommandByte, closeDoorCommandByte.length
+						  ,InetAddress.getLocalHost(), 5005);
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}	  
+        	  try {
+                 elevatorSocket.send(elevatorPacket);
+              } catch (IOException e) {
+                 e.printStackTrace();
+                 System.exit(1);
+              }
+        	  try {
+				elevatorPacket = new DatagramPacket(this.StartEngineCommandByte, StartEngineCommandByte.length
+						  ,InetAddress.getLocalHost(), 5005);
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+              try {
+                 elevatorSocket.send(elevatorPacket);
+              } catch (IOException e) {
+                 e.printStackTrace();
+                 System.exit(1);
+              }
+              if(person.getDestFloor() > currentFloor)
+              {
+            	  try {
+					elevatorPacket = new DatagramPacket(this.moveUpCommandByte, moveUpCommandByte.length
+							  ,InetAddress.getLocalHost(), 5005);
+            	  } catch (UnknownHostException e1) {
+					e1.printStackTrace();
+            	  }
+              }
+              else
+              {
+            	  try {
+					elevatorPacket = new DatagramPacket(this.moveDownCommandByte, moveDownCommandByte.length
+							  ,InetAddress.getLocalHost(), 5005);
+            	  } catch (UnknownHostException e1) {					
+					e1.printStackTrace();
+            	  }
+              }
+              try {
+            	  elevatorSocket.send(elevatorPacket);
+              } catch (IOException e) {
+            	  e.printStackTrace();
+              	System.exit(1);
+              }
+
+    	  }//if
+    	  else //elevator is in use
+    	  {
+    		  personList.add(person);
+    		  //do sth here
+    	  }    
+
+    	  
+      }//if
+	 
+	      
+   }
+
+   
+   public synchronized void floorArrivale()
+   {
+	   //Floor's sensor notifies the Scheduler that new floor has reached,
+	   // so scheduler should a decision to stop the elevator here or not
    }
 
    public static void main( String args[] )
    {
-      Scheduler c = new Scheduler();
-      c.receiveAndEcho();
+	  Thread personThread;
+      Scheduler scheduler = new Scheduler();
+      PersonHandler personHandler = new PersonHandler(scheduler);
+      personThread = new Thread(personHandler, "New request");
+      personThread.start();
+      
+      //c.receiveAndEcho();
    }
+}
+class PersonHandler implements Runnable
+{
+	private Scheduler scheduler;
+	public PersonHandler(Scheduler scheduler) {
+		this.scheduler = scheduler; 
+	}
+	
+	@Override
+	public void run() {
+		while(true)
+			scheduler.personArrivale();
+		
+	}
+	
 }
 

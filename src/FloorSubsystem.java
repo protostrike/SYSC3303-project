@@ -13,6 +13,8 @@ public class FloorSubsystem{
 
    DatagramPacket sendPacket, receivePacket;
    DatagramSocket sendReceiveSocket;
+   int travelTime = 5; //5s
+   int openOrCloseDoorTime = 1; //1s
 
    
    private byte[] convertToBytes(Object object) throws IOException {
@@ -41,7 +43,7 @@ public class FloorSubsystem{
  
 	   byte msg[] = null; 
      
-      Person person = new Person("14:05:15.0", 1, 10, true);
+      Person person = new Person(" ", 1, 10, true);
      
      
       System.out.println(person);
