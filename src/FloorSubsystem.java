@@ -143,15 +143,7 @@ public class FloorSubsystem {
 		e2.printStackTrace();
 		  }
 		     
-		  System.out.println(es);
-		  
-		  if (es.up && es.motorOn)
-			  direction = "up";
-		  else if(!es.up && es.motorOn) {
-			  direction ="down";
-		  }
-			  
-		  
+		
 	
 		
 		 
