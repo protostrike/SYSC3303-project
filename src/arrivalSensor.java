@@ -10,6 +10,12 @@ public class arrivalSensor implements Runnable {
 	byte[] StopEngineCommandByte = {(byte)4};
 
 
+	
+	// very incomplete just seeing what works and what doesnt
+	
+	
+	
+	
 	public synchronized void sensor() {
 		while (true){
 

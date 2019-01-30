@@ -8,7 +8,8 @@ public class floor {
 	String upOrDownLamp;
 	String direction; //of elevator
 	int floorNum;
-	Thread arrivalSensor;
+	arrivalSensor sensor;
+	Thread s1;
 	
 	  
 
@@ -19,8 +20,8 @@ public floor(int n) {
     upOrDownPressed = null;
 	upOrDownLamp = null;
 	direction = null;
-	arrivalSensor =new Thread();
-	arrivalSensor.start();
+	s1 = new Thread(sensor);
+	s1.start();
 	
 }
 

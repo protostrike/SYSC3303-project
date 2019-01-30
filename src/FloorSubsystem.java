@@ -12,7 +12,7 @@ public class FloorSubsystem {
 	String upOrDownPressed ;
 	String upOrDownLamp;
 	String direction; //of elevator
-	Boolean arrivalSensor;
+	//Boolean arrivalSensor;
 	String time;
 	Scanner x;
 	int currentFloor;
@@ -119,6 +119,9 @@ public class FloorSubsystem {
 		     System.out.println("waiting for packet from Scheduler...");
 		     
 		     
+		     
+		     
+		     // assuming scheduler sends elevator status ??
 		    
 		     byte data[] = new byte[500];
 		     receivePacket = new DatagramPacket (data,data.length);
