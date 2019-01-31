@@ -20,18 +20,18 @@ public floor(int n) {
     upOrDownPressed = null;
 	upOrDownLamp = null;
 	direction = null;
-	s1 = new Thread(sensor);
-	s1.start();
+	new Thread(sensor).start();
+	
 	
 }
 
 
 public void setButtonPressed(String x) {
-	upOrDownPressed = upOrDownLamp = x;
+	this.upOrDownPressed = this.upOrDownLamp = x;
 }
 
 public String toString() {
-	return "floor#: "+ floorNum;
+	return "floor#: "+ floorNum+ " Button pressed " + upOrDownPressed + '\n';
 }
 
 

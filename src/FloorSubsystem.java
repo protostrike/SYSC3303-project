@@ -33,9 +33,10 @@ public class FloorSubsystem {
 			desiredFloor = Integer.parseInt(x.next());
 			
 			Person p = new Person(time,currentFloor,desiredFloor,upOrDownPressed.trim().equals("up")?true:false);
-
-			floors.get(currentFloor-1).requests.add(p);
-			requests.add(p);
+			
+			floors.get(currentFloor-1).setButtonPressed(upOrDownPressed); //updates buttons pressed per floor
+			floors.get(currentFloor-1).requests.add(p);				      // adds request to floor requests		
+			requests.add(p);                                              // add request to subsystem requests
 		}
 		
 		
@@ -63,7 +64,7 @@ public class FloorSubsystem {
 		
 		try {
 			sendSocket = new DatagramSocket();
-			receiveSocket = new DatagramSocket(23);
+			receiveSocket = new DatagramSocket(5010);
 		}catch (SocketException se) {   
 	        se.printStackTrace();
 	        System.exit(1);
@@ -76,18 +77,18 @@ public class FloorSubsystem {
 		for (int i=0;i<numFloors;i++) {                     // initialize all floors
 			floors.add(new floor(i+1));
 		}
-		System.out.println(floors);
+	
 		
 
 		File f = new File("data.txt");
 		getData(f);
 		
-	
+		System.out.println(floors);
 		
 		
 	}
 		
-	public void start() {
+	public synchronized void start() {
 		while (!requests.isEmpty()) {                    // sending the first request and so on...
 				Person p = requests.remove();
 		byte msg[]=null;
@@ -99,7 +100,7 @@ public class FloorSubsystem {
 		  
 		  
 		try {
-		  sendPacket = new DatagramPacket(msg,msg.length,InetAddress.getLocalHost(), 24);
+		  sendPacket = new DatagramPacket(msg,msg.length,InetAddress.getLocalHost(), 5000);
 		}catch (UnknownHostException e) {
 	        e.printStackTrace();
 	        System.exit(1);
@@ -146,6 +147,11 @@ public class FloorSubsystem {
 		e2.printStackTrace();
 		  }
 		     
+		  
+		  for (int i=0;i<numFloors;i++) {                                        // update all floor arrow lamps
+			  floors.get(i).direction=(es.up?"up":"Down");
+			  
+		  }
 		
 	
 		
@@ -161,10 +167,37 @@ public class FloorSubsystem {
 	
 	 public static void main( String args[] )
 	   {
+		 
 	      FloorSubsystem f = new FloorSubsystem();
-	      f.start();
+	      floorHandler h = new floorHandler(f);
+	      new Thread(h).start();
 	   }
 	
 	
 
 }
+
+
+
+
+class floorHandler implements Runnable 
+{
+	private FloorSubsystem floorSubsystem;
+	public floorHandler(FloorSubsystem floorSubsystem) {
+		this.floorSubsystem = floorSubsystem; 
+	}
+	
+	@Override
+	public void run() {
+		while(true) {
+			floorSubsystem.start();
+			
+		}
+	}
+}
+
+	
+	
+	
+	
+
