@@ -198,6 +198,19 @@ public class ElevatorSubsystem {
    {
 	   System.out.println("Starting engine");
 	   this.motorOn= true;
+	   
+	   byte [] floorArival = {(byte)currentFloor};
+	   try {
+		sendPacket = new DatagramPacket(floorArival,floorArival.length,InetAddress.getLocalHost(),5001);
+	} catch (UnknownHostException e) {
+		e.printStackTrace();
+	}
+	   
+	   try {
+		sendReceiveSocket.send(sendPacket);
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
    }
    public void stop()
    {

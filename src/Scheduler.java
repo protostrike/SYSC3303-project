@@ -178,126 +178,45 @@ elevatorPacket = new DatagramPacket(data,data.length);
     	  System.out.println("elevator is coming right away");
     	  System.out.println( "Sending packet To the elevator:");
 
+    	  
+    	  
+    	  
+    	  System.out.println("\nPicking person up...\n");
+    	  try {
+			elevatorPacket = new DatagramPacket(this.StartEngineCommandByte, StartEngineCommandByte.length
+					  ,InetAddress.getLocalHost(), 5005);
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+          try {
+             elevatorSocket.send(elevatorPacket);
+          } catch (IOException e) {
+             e.printStackTrace();
+             System.exit(1);
+          }
+    	  
+    	  
+    	  
+    	  
+    	  
+    	  
+    	  
+    	  
     	  if(currentFloor == person.originFloor)
     	  {
-    		  System.out.println("\nPicking person up...\n");
-        	  try {
-				elevatorPacket = new DatagramPacket(this.openDoorCommandByte, openDoorCommandByte.length
-						,InetAddress.getLocalHost(), 5005);
-        	  } catch (UnknownHostException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-        	  }
-              try {
-                 elevatorSocket.send(elevatorPacket);
-              } catch (IOException e) {
-                 e.printStackTrace();
-                 System.exit(1);
-              }
-        	  try {
-				elevatorPacket = new DatagramPacket(this.closeDoorCommandByte, closeDoorCommandByte.length
-						  ,InetAddress.getLocalHost(), 5005);
-			} catch (UnknownHostException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}	  
-        	  try {
-                 elevatorSocket.send(elevatorPacket);
-              } catch (IOException e) {
-                 e.printStackTrace();
-                 System.exit(1);
-              }
-        	  try {
-				elevatorPacket = new DatagramPacket(this.StartEngineCommandByte, StartEngineCommandByte.length
-						  ,InetAddress.getLocalHost(), 5005);
-			} catch (UnknownHostException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-              try {
-                 elevatorSocket.send(elevatorPacket);
-              } catch (IOException e) {
-                 e.printStackTrace();
-                 System.exit(1);
-              }
               
+              floorArrival(person.getDestFloor());
               
-              if(person.getDestFloor() > currentFloor)
-              {
-            	  try {
-					elevatorPacket = new DatagramPacket(this.moveUpCommandByte, moveUpCommandByte.length
-							  ,InetAddress.getLocalHost(), 5005);
-					currentFloor++;
-            	  } catch (UnknownHostException e1) {
-					e1.printStackTrace();
-            	  }
-              }
-              else
-              {
-            	  try {
-					elevatorPacket = new DatagramPacket(this.moveDownCommandByte, moveDownCommandByte.length
-							  ,InetAddress.getLocalHost(), 5005);
-					currentFloor--;
-            	  } catch (UnknownHostException e1) {					
-					e1.printStackTrace();
-            	  }
-              }
-              try {
-            	  elevatorSocket.send(elevatorPacket);
-              } catch (IOException e) {
-            	  e.printStackTrace();
-              	System.exit(1);
-              }
-              floorArrival(person.destFloor);
-    	  }//if
+    	  }
     	
-    	  else if (person.getOriginFloor()>currentFloor) {
-    		  System.out.println("\nPicking person up...\n");
-    		 
-    			  
-    			  try {
-  					elevatorPacket = new DatagramPacket(this.moveUpCommandByte, moveUpCommandByte.length
-  							  ,InetAddress.getLocalHost(), 5005);
-  					currentFloor++;
-              	  } catch (UnknownHostException e1) {					
-  					e1.printStackTrace();
-              	  }
-       
-                try {
-              	  elevatorSocket.send(elevatorPacket);
-              	  
-                } catch (IOException e) {
-              	  e.printStackTrace();
-                	System.exit(1);
-                }
+    	  else  {
+    		  
                 floorArrival(person.getOriginFloor());//elevator goes to requested floor
                 floorArrival(person.getDestFloor());//elevator goes to destination floor
     		  }
     	  
-    	  else {
-    		  System.out.println("\nPicking person up...\n");
-    		 
-    		  try {
-					elevatorPacket = new DatagramPacket(this.moveDownCommandByte, moveDownCommandByte.length
-							  ,InetAddress.getLocalHost(), 5005);
-					currentFloor--;
-          	  } catch (UnknownHostException e1) {					
-					e1.printStackTrace();
-          	  }
-            
-            try {
-          	  elevatorSocket.send(elevatorPacket);
-          	  
-            } catch (IOException e) {
-          	  e.printStackTrace();
-            	System.exit(1);
-            }
-            floorArrival(person.getOriginFloor());   //from current to request location
-    		floorArrival(person.getDestFloor());
-    		// from request to dest.
-    		//  personList.add(person);
-    		  
-    	  }    
+    	   
     	  
     	  System.out.println("\nPerson Dropped off\n");
     	  
@@ -324,7 +243,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
 	   while (true) {
 	   elevatorPacket = new DatagramPacket(data,data.length);
 	   
-	  
+	 
 	  
 	   try {
 		elevatorSocket.receive(elevatorPacket);
@@ -349,7 +268,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
 		   
 		   
 	   }
-	   else if ((int)data[0]>destinationList.getFirst()) {
+	   else if ((int)data[0]>n) {
 		   try {
 		   elevatorPacket = new DatagramPacket(moveDownCommandByte,moveDownCommandByte.length,InetAddress.getLocalHost(),5005);
 		   currentFloor--;
@@ -357,7 +276,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
 			e.printStackTrace();
 		}
 	   }
-	   else if((int)data[0]<destinationList.getFirst()) {
+	   else if((int)data[0]<n) {
 		   try {
 			   elevatorPacket = new DatagramPacket(moveUpCommandByte,moveUpCommandByte.length,InetAddress.getLocalHost(),5005);
 			   currentFloor++;
