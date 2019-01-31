@@ -19,7 +19,7 @@ public class ElevatorStatus implements Serializable{
 		   this.currentFloor = currentFloor;
 		   this.motorOn = motorOn;
 		   this.up = up;
-		   this.inUse= false;
+		   this.inUse= motorOn;
 	}
 
 	public int getCurrentFloor() {

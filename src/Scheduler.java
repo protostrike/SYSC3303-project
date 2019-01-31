@@ -7,7 +7,7 @@ import java.util.LinkedList;
 public class Scheduler {
 
    DatagramPacket  floorPacket, elevatorPacket;
-   DatagramSocket floorSocket, elevatorSocket;
+   DatagramSocket floorSocket, elevatorSocket, elevatorSocket2;
    LinkedList<Person> personList = new LinkedList<Person>();
    byte[] statusByte = {(byte)0};
    byte[] moveUpCommandByte = {(byte)1};
@@ -36,7 +36,8 @@ public class Scheduler {
          // Construct a datagram socket and bind it to any available 
          // port on the local host machine. This socket will be used to
          // send UDP Datagram packets.
-    	  elevatorSocket = new DatagramSocket(5001);
+    	  elevatorSocket = new DatagramSocket(5001);	// socket for receiving floor arrival updates
+    	 // elevatorSocket2 = new DatagramSocket(5002);   // socket for receiving elevator status
 
 
          // Construct a datagram socket and bind it to port 5000 
@@ -55,7 +56,7 @@ public class Scheduler {
 
    public synchronized void personArrivale()
    {
-	 
+	
 	   
 	   byte data[] = new byte[1000];
 	   floorPacket = new DatagramPacket(data, data.length);
@@ -97,6 +98,7 @@ public class Scheduler {
 		}
       
       System.out.println(person);
+      personList.add(person);
       
       
       
@@ -137,14 +139,17 @@ public class Scheduler {
 data = new byte[100];
 elevatorPacket = new DatagramPacket(data,data.length);
       try {        
+    	  
          System.out.println("Waiting..."); // so we know we're waiting
-         elevatorSocket.receive(elevatorPacket);
+         elevatorSocket.receive(elevatorPacket); //receives status of elevator
       } catch (IOException e) {
          System.out.print("IO Exception: likely:");
          System.out.println("Receive Socket Timed Out.\n" + e);
          e.printStackTrace();
          System.exit(1);
       }
+     
+      
 
       // Process the received datagram.
       System.out.println("Status received:");
@@ -153,12 +158,33 @@ elevatorPacket = new DatagramPacket(data,data.length);
       System.out.print("Containing: " );
       // Form a String from the byte array.
       data = Arrays.copyOfRange(data, 0, len);
+      
+      
+      try {
+		floorPacket = new DatagramPacket(elevatorPacket.getData(),elevatorPacket.getLength(),InetAddress.getLocalHost(),5010);
+	} catch (UnknownHostException e2) {
+		// TODO Auto-generated catch block
+		e2.printStackTrace();
+	}		
+      System.out.println("Sending to floor...");// send status back to floor
+      try {
+		floorSocket.send(floorPacket);
+	} catch (IOException e2) {
+		// TODO Auto-generated catch block
+		e2.printStackTrace();
+	}
+      
+      
+      
+   
+      
+      
 
 
       ElevatorStatus status = new ElevatorStatus();
       
       try {
-    	  status = (ElevatorStatus) convertFromBytes(data);
+    	 status = (ElevatorStatus) convertFromBytes(data);
 	} catch (ClassNotFoundException e1) {
 		// TODO Auto-generated catch block
 		e1.printStackTrace();
@@ -174,6 +200,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
       {
     	  this.currentFloor = status.getCurrentFloor();
     	  this.destinationList.add(person.getDestFloor());
+    	  
     	  
     	  System.out.println("elevator is coming right away");
     	  System.out.println( "Sending packet To the elevator:");
@@ -203,31 +230,29 @@ elevatorPacket = new DatagramPacket(data,data.length);
     	  
     	  
     	  
-    	  if(currentFloor == person.originFloor)
+    	  if(currentFloor == personList.getFirst().originFloor)
     	  {
+
               
-              floorArrival(person.getDestFloor());
+              floorArrival(personList.getFirst().getDestFloor());
               
     	  }
     	
-    	  else  {
+    	  else   {
+
     		  
-                floorArrival(person.getOriginFloor());//elevator goes to requested floor
-                floorArrival(person.getDestFloor());//elevator goes to destination floor
+                floorArrival(personList.getFirst().getOriginFloor());//elevator goes to requested floor
+                floorArrival(personList.getFirst().getDestFloor());//elevator goes to destination floor
+               
     		  }
-    	  
+    	  personList.removeFirst();
     	   
     	  
     	  System.out.println("\nPerson Dropped off\n");
     	  
-    	  destinationList.remove();
+    	  destinationList.removeFirst();
       }//if
       
-      
-      
-      else {
-    	  // elevator in use
-      }
       
 	 
 	      
@@ -243,16 +268,18 @@ elevatorPacket = new DatagramPacket(data,data.length);
 	   while (true) {
 	   elevatorPacket = new DatagramPacket(data,data.length);
 	   
+	   try {
+		Thread.sleep(2000);
+	} catch (InterruptedException e1) {
+		// TODO Auto-generated catch block
+		e1.printStackTrace();
+	}
 	 
 	  
-	   try {
-		elevatorSocket.receive(elevatorPacket);
-	} catch (IOException e) {
-		e.printStackTrace();
-	}
-	   
-	   if ((int)data[0] == n) {
-		   
+	  
+
+
+	   if (currentFloor == n) {
 		   try {
 			elevatorPacket = new DatagramPacket(StopEngineCommandByte,StopEngineCommandByte.length,InetAddress.getLocalHost(),5005);
           } catch (UnknownHostException e) {
@@ -265,33 +292,45 @@ elevatorPacket = new DatagramPacket(data,data.length);
 				e.printStackTrace();
 			}
 		   break;
-		   
-		   
-	   }
-	   else if ((int)data[0]>n) {
+	   
+	    
+}
+	   
+	   if (currentFloor>n) {
+	
 		   try {
 		   elevatorPacket = new DatagramPacket(moveDownCommandByte,moveDownCommandByte.length,InetAddress.getLocalHost(),5005);
-		   currentFloor--;
+		  
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
+		   currentFloor--;
+
+		  
+		   
 	   }
-	   else if((int)data[0]<n) {
+	   else if(currentFloor<n) {
+
 		   try {
 			   elevatorPacket = new DatagramPacket(moveUpCommandByte,moveUpCommandByte.length,InetAddress.getLocalHost(),5005);
-			   currentFloor++;
+			   
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
+		   currentFloor++;
+		   
+		  
 	   }
+
 	   
 	   try {
 		elevatorSocket.send(elevatorPacket);
+		
 	} catch (IOException e) {
 		e.printStackTrace();
 	}
-	   
-	    }
+
+}
 	   
    }
 

@@ -89,7 +89,7 @@ public class FloorSubsystem {
 	}
 		
 	public synchronized void start() {
-		while (!requests.isEmpty()) {                    // sending the first request and so on...
+		            while (!requests.isEmpty())  {    // sending the first request and so on...
 				Person p = requests.remove();
 		byte msg[]=null;
 		  try {
@@ -136,10 +136,12 @@ public class FloorSubsystem {
 		     System.out.println("Packet received\n");
 		     
 		     int len = receivePacket.getLength();
+		     data = Arrays.copyOfRange(data,0,len);
+		     
 		  ElevatorStatus es = new ElevatorStatus();
 		  
 		  try {
-			  es = (ElevatorStatus) convertFromBytes(Arrays.copyOfRange(data,0,len));
+			  es = (ElevatorStatus) convertFromBytes(data);
 		  }catch(ClassNotFoundException e){
 			  e.printStackTrace();
 		  }
@@ -147,21 +149,22 @@ public class FloorSubsystem {
 		e2.printStackTrace();
 		  }
 		     
-		  
+		  direction = (es.up?"up":"Down");
 		  for (int i=0;i<numFloors;i++) {                                        // update all floor arrow lamps
-			  floors.get(i).direction=(es.up?"up":"Down");
-			  
+			  floors.get(i).direction=direction;
 		  }
-		
+		  
+		  System.out.println(es);
+		System.out.println(direction);
 	
 		
 		 
 			
+		            }
 			
-			
-		}
-		sendSocket.close();
-		receiveSocket.close();
+		
+		//sendSocket.close();
+		//receiveSocket.close();
 		
 	}
 	
@@ -189,10 +192,10 @@ class floorHandler implements Runnable
 	
 	@Override
 	public void run() {
-		while(true) {
+		
 			floorSubsystem.start();
 			
-		}
+		
 	}
 }
 
