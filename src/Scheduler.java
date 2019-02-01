@@ -37,7 +37,7 @@ public class Scheduler {
          // port on the local host machine. This socket will be used to
          // send UDP Datagram packets.
     	  elevatorSocket = new DatagramSocket(5001);	// socket for receiving floor arrival updates
-    	 // elevatorSocket2 = new DatagramSocket(5002);   // socket for receiving elevator status
+    	  elevatorSocket2 = new DatagramSocket(5002);   // socket for receiving elevator status
 
 
          // Construct a datagram socket and bind it to port 5000 
@@ -140,8 +140,8 @@ data = new byte[100];
 elevatorPacket = new DatagramPacket(data,data.length);
       try {        
     	  
-         System.out.println("Waiting..."); // so we know we're waiting
-         elevatorSocket.receive(elevatorPacket); //receives status of elevator
+         System.out.println("Elevator is busy..."); // so we know we're waiting
+         elevatorSocket2.receive(elevatorPacket); //receives status of elevator
       } catch (IOException e) {
          System.out.print("IO Exception: likely:");
          System.out.println("Receive Socket Timed Out.\n" + e);
@@ -274,10 +274,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
                
     		  }
     	  personList.removeFirst();
-    	   
-    	  
     	  System.out.println("\nPerson Dropped off\n");
-    	  
     	  destinationList.removeFirst();
       }//if
       
@@ -290,19 +287,21 @@ elevatorPacket = new DatagramPacket(data,data.length);
    public  synchronized void floorArrival(int n)
    {
 	
-	   
+	   byte data[] = new byte[1];
 	
 	   
 	   while (true) {
 
+		   elevatorPacket = new DatagramPacket(data,data.length);
+		   
+		   try {
+			elevatorSocket.receive(elevatorPacket);
+		} catch (IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
 	   
-	   try {
-		Thread.sleep(2000);
-	} catch (InterruptedException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	}
-	 
+
 	  
 	  
 

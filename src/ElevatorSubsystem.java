@@ -44,25 +44,25 @@ public class ElevatorSubsystem {
 	  // byte[] msg= " ".getBytes();
 	   byte data[] = new byte[1000];
 	   receivePacket = new DatagramPacket(data, data.length);
-	   try {
-		   sendReceiveSocket.setSoTimeout(2);
+	//   try {
+		  // sendReceiveSocket.setSoTimeout(2);
 		   try {
 			   sendReceiveSocket.receive(receivePacket);
 		   } catch (IOException e) {
 			// TODO Auto-generated catch block
 			   return;
-		
+			//e.printStackTrace();
 		   }
-	   } catch (SocketException e2) {
-		  try {
-			wait();
-			return;
-		} catch (InterruptedException e) {
+	//   } catch (SocketException e2) {
+		 //  try {
+		//	wait();
+		//	return;
+	//	} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			//e.printStackTrace();
+	//	}
 		   
-	   }
+	//   }
 
 		
 		  // Process the received datagram.
@@ -118,7 +118,7 @@ public class ElevatorSubsystem {
 		  if(requestType.equalsIgnoreCase("status requested") )
 		  {
 			  sendPacket =new DatagramPacket(data, data.length,
-			        receivePacket.getAddress(), 5001);
+			        receivePacket.getAddress(), 5002);
 			  
 			
 			  System.out.println( "Sending packet to scheduler:");
@@ -147,53 +147,96 @@ public class ElevatorSubsystem {
   
    public void moveUp()
    {
-	   
 	   currentFloor++;
+	   System.out.println("moving up to floor"+currentFloor);
 	   try {
 		Thread.sleep(elevatorSpeed * 1000);
 	   } catch (InterruptedException e) {
 		e.printStackTrace();
 	   }
 	   this.up= true;
-	   System.out.println("Moving up to floor"+ currentFloor);
+	   
+	   byte [] floorArival = {(byte)currentFloor};
+	   try {
+		sendPacket = new DatagramPacket(floorArival,floorArival.length,InetAddress.getLocalHost(),5001);
+	} catch (UnknownHostException e) {
+		e.printStackTrace();
+	}
+	   
+	   try {
+		sendReceiveSocket.send(sendPacket);
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
 	   
 	   
-   
 
    }
    public void moveDown()
    {
-	   
 	   currentFloor--;
+	   System.out.println("moving down to floor"+ currentFloor);
 	   try {
 		Thread.sleep(elevatorSpeed * 1000);
 	   } catch (InterruptedException e) {
 		e.printStackTrace();
 	   }
 	   this.up= false;
-	   System.out.println("Moving down to floor"+ currentFloor);
 	   
+	   byte [] floorArival = {(byte)currentFloor};
+	   try {
+		sendPacket = new DatagramPacket(floorArival,floorArival.length,InetAddress.getLocalHost(),5001);
+	} catch (UnknownHostException e) {
+		e.printStackTrace();
+	}                    									//updates scheduler whenever reaches new floor
 	   
-	  
+	   try {
+		sendReceiveSocket.send(sendPacket);
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
 	   
 	   
    }
    public void start()
    {
-	   System.out.println("Starting engin at floor "+currentFloor);
+	   System.out.println("Starting engine");
 	   this.motorOn= true;
-	 
 	   
+	   byte [] floorArival = {(byte)currentFloor};
+	   try {
+		sendPacket = new DatagramPacket(floorArival,floorArival.length,InetAddress.getLocalHost(),5001);
+	} catch (UnknownHostException e) {
+		e.printStackTrace();
+	}
+	   
+	   try {
+		sendReceiveSocket.send(sendPacket);
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
    }
    public void stop()
    {
-	   System.out.println("Stopping engine at floor "+currentFloor);
+	   System.out.println("Stopping engine at floor"+currentFloor);
 	   this.motorOn= false;
 	   openDoor();
 	   closeDoor();
 	   
 	   
-	
+	   byte [] floorArival = {(byte)currentFloor};
+	   try {
+		sendPacket = new DatagramPacket(floorArival,floorArival.length,InetAddress.getLocalHost(),5001);
+	} catch (UnknownHostException e) {
+		e.printStackTrace();
+	}
+	   
+	   try {
+		sendReceiveSocket.send(sendPacket);
+	} catch (IOException e) {
+		e.printStackTrace();
+	}
+	  
    }
    public void closeDoor()
    {
