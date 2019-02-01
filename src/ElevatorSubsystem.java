@@ -180,8 +180,9 @@ public class ElevatorSubsystem {
    }
    public void start()
    {
-	   System.out.println("Starting engine");
+	   System.out.println("Starting engin at floor "+currentFloor);
 	   this.motorOn= true;
+	 
 	   
    }
    public void stop()

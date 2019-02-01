@@ -154,8 +154,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
       // Process the received datagram.
       System.out.println("Status received:");
       len = elevatorPacket.getLength();
-      System.out.println("Length: " + len);
-      System.out.print("Containing: " );
+    
       // Form a String from the byte array.
       data = Arrays.copyOfRange(data, 0, len);
       
@@ -202,7 +201,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
     	  this.destinationList.add(person.getDestFloor());
     	  
     	  
-    	  System.out.println("elevator is coming right away");
+    	  System.out.println("elevator is on the way");
     	  System.out.println( "Sending packet To the elevator:");
 
     	  
@@ -233,15 +232,44 @@ elevatorPacket = new DatagramPacket(data,data.length);
     	  if(currentFloor == personList.getFirst().originFloor)
     	  {
 
+    		  try {
+        			elevatorPacket = new DatagramPacket(this.openDoorCommandByte, openDoorCommandByte.length
+        					  ,InetAddress.getLocalHost(), 5005);
+        		} catch (UnknownHostException e1) {
+        			// TODO Auto-generated catch block
+        			e1.printStackTrace();
+        		}
+                  try {
+                     elevatorSocket.send(elevatorPacket);
+                  } catch (IOException e) {
+                     e.printStackTrace();
+                     System.exit(1);
+                  }
               
               floorArrival(personList.getFirst().getDestFloor());
               
+             
     	  }
     	
     	  else   {
 
     		  
                 floorArrival(personList.getFirst().getOriginFloor());//elevator goes to requested floor
+                
+                try {
+          			elevatorPacket = new DatagramPacket(this.StartEngineCommandByte, StartEngineCommandByte.length
+          					  ,InetAddress.getLocalHost(), 5005);
+          		} catch (UnknownHostException e1) {
+          			// TODO Auto-generated catch block
+          			e1.printStackTrace();
+          		}
+                    try {
+                       elevatorSocket.send(elevatorPacket);
+                    } catch (IOException e) {
+                       e.printStackTrace();
+                       System.exit(1);
+                    }
+                    
                 floorArrival(personList.getFirst().getDestFloor());//elevator goes to destination floor
                
     		  }
@@ -263,10 +291,10 @@ elevatorPacket = new DatagramPacket(data,data.length);
    {
 	
 	   
-	   byte[] data =new byte [1];
+	
 	   
 	   while (true) {
-	   elevatorPacket = new DatagramPacket(data,data.length);
+
 	   
 	   try {
 		Thread.sleep(2000);
