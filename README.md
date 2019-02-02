@@ -13,10 +13,10 @@ Testing: Using three different ports on ONE PC for testing (22,23,24)
 
 Qingchen(Alex): Test cases, UML, documentation
 
-Mohamad: Floor 
+Mohamad: Floor, FloorSubsystem, parts of scheduler
 
-Aryan: Scheduler
+Aryan: Scheduler, ElevatorSubsystem, Elevatortatus, Person 
 
-Chengyang: Elevator
+Chengyang: 
 
 Reginald: State Machine Diagrams
