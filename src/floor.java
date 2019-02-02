@@ -1,4 +1,3 @@
-import java.net.*;
 import java.util.*;
 public class floor {
 
@@ -8,7 +7,6 @@ public class floor {
 	String upOrDownLamp;
 	String direction; //of elevator
 	int floorNum;
-	arrivalSensor sensor;
 	Thread s1;
 	
 	  
@@ -20,8 +18,7 @@ public floor(int n) {
     upOrDownPressed = null;
 	upOrDownLamp = null;
 	direction = null;
-	new Thread(sensor).start();
-	
+
 	
 }
 

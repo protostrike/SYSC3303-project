@@ -51,29 +51,17 @@ public class ElevatorSubsystem {
 		   } catch (IOException e) {
 			// TODO Auto-generated catch block
 			   return;
-			//e.printStackTrace();
-		   }
-	//   } catch (SocketException e2) {
-		 //  try {
-		//	wait();
-		//	return;
-	//	} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-	//	}
-		   
-	//   }
-
 		
-		  // Process the received datagram.
-		  System.out.println("Packet received from Scheduler:");
+		   }
+	
+		
 		  int len = receivePacket.getLength();
 		
 		  
 		
-		  // Form a String from the byte array.
+		
 	
-		  //If the scheduler wants to check the status
+		  //If its a command byte
 		  if(len == 1)
 		  {	 
 			  switch(data[0])
@@ -115,16 +103,11 @@ public class ElevatorSubsystem {
 		  }//if
 		  
 		  
-		  if(requestType.equalsIgnoreCase("status requested") )
+		  if(requestType.equalsIgnoreCase("status requested") )				// if status is asked for..
 		  {
 			  sendPacket =new DatagramPacket(data, data.length,
 			        receivePacket.getAddress(), 5002);
-			  
 			
-			  System.out.println( "Sending packet to scheduler:");
-			  len = sendPacket.getLength();
-			  System.out.println("Length: " + len);
-			  System.out.print("Containing: ");
 	
 			    
 			  // Send the datagram packet to the client via the send socket. 
@@ -135,7 +118,7 @@ public class ElevatorSubsystem {
 			     System.exit(1);
 			  }
 			
-			  System.out.println("Server: packet sent");
+			
 			  
 			  // We're finished, so close the socket.
 			  //sendReceiveSocket.close();
@@ -144,17 +127,24 @@ public class ElevatorSubsystem {
    }
  
 
+   
+   //elevator updates scheduler of its current floor whenever it moves or starts the engine
+   
+   
+   
+   
   
    public void moveUp()
    {
-	   currentFloor++;
-	   System.out.println("moving up to floor"+currentFloor);
+	   
 	   try {
 		Thread.sleep(elevatorSpeed * 1000);
 	   } catch (InterruptedException e) {
 		e.printStackTrace();
 	   }
 	   this.up= true;
+	   currentFloor++;
+	   System.out.println("moving up to floor"+currentFloor);
 	   
 	   byte [] floorArival = {(byte)currentFloor};
 	   try {
@@ -174,21 +164,21 @@ public class ElevatorSubsystem {
    }
    public void moveDown()
    {
-	   currentFloor--;
-	   System.out.println("moving down to floor"+ currentFloor);
+	  
 	   try {
 		Thread.sleep(elevatorSpeed * 1000);
 	   } catch (InterruptedException e) {
 		e.printStackTrace();
 	   }
 	   this.up= false;
-	   
+	   currentFloor--;
+	   System.out.println("moving down to floor"+ currentFloor);
 	   byte [] floorArival = {(byte)currentFloor};
 	   try {
 		sendPacket = new DatagramPacket(floorArival,floorArival.length,InetAddress.getLocalHost(),5001);
 	} catch (UnknownHostException e) {
 		e.printStackTrace();
-	}                    									//updates scheduler whenever reaches new floor
+	}                    									
 	   
 	   try {
 		sendReceiveSocket.send(sendPacket);
@@ -200,7 +190,7 @@ public class ElevatorSubsystem {
    }
    public void start()
    {
-	   System.out.println("Starting engine");
+	   System.out.println("Starting engine (at floor"+currentFloor+")");
 	   this.motorOn= true;
 	   
 	   byte [] floorArival = {(byte)currentFloor};
@@ -224,18 +214,7 @@ public class ElevatorSubsystem {
 	   closeDoor();
 	   
 	   
-	   byte [] floorArival = {(byte)currentFloor};
-	   try {
-		sendPacket = new DatagramPacket(floorArival,floorArival.length,InetAddress.getLocalHost(),5001);
-	} catch (UnknownHostException e) {
-		e.printStackTrace();
-	}
-	   
-	   try {
-		sendReceiveSocket.send(sendPacket);
-	} catch (IOException e) {
-		e.printStackTrace();
-	}
+	
 	  
    }
    public void closeDoor()

@@ -45,8 +45,7 @@ public class Scheduler {
          // receive UDP Datagram packets.
          floorSocket = new DatagramSocket(5000);
          
-         // to test socket timeout (2 seconds)
-         //receiveSocket.setSoTimeout(2000);
+        
       } catch (SocketException se) {
          se.printStackTrace();
          System.exit(1);
@@ -90,7 +89,7 @@ public class Scheduler {
        Person person = new Person();
       
        try {
-    	   person = (Person) convertFromBytes(data);
+    	   person = (Person) convertFromBytes(data);					// convert data to perso object (the request)
        } catch (ClassNotFoundException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {
@@ -128,13 +127,7 @@ public class Scheduler {
 
       System.out.println("Server: status asked from Elevator");
       System.out.println("Server: Waiting for status of elevator.\n");
-	//	try {
-		//	elevatorPacket = new DatagramPacket(data, data.length,
-			//		  InetAddress.getLocalHost(), 5005);
-		//} catch (UnknownHostException e2) {
-			// TODO Auto-generated catch block
-		//	e2.printStackTrace();
-		//}
+
 
 data = new byte[100];
 elevatorPacket = new DatagramPacket(data,data.length);
@@ -165,7 +158,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
 		// TODO Auto-generated catch block
 		e2.printStackTrace();
 	}		
-      System.out.println("Sending to floor...");// send status back to floor
+      System.out.println("Sending to floor...");            // send status back to floor
       try {
 		floorSocket.send(floorPacket);
 	} catch (IOException e2) {
@@ -195,7 +188,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
       
       System.out.println(status);
       
-      if (! status.isInUse())
+      if (! status.isInUse())									// if elevator is not in use
       {
     	  this.currentFloor = status.getCurrentFloor();
     	  this.destinationList.add(person.getDestFloor());
@@ -246,7 +239,8 @@ elevatorPacket = new DatagramPacket(data,data.length);
                      System.exit(1);
                   }
               
-              floorArrival(personList.getFirst().getDestFloor());
+              floorArrival(personList.getFirst().getDestFloor());	// if requested initial position is where elevator is at
+              														// go straight to destination
               
              
     	  }
@@ -284,10 +278,10 @@ elevatorPacket = new DatagramPacket(data,data.length);
    }
 
    
-   public  synchronized void floorArrival(int n)
+   public   void floorArrival(int n)		// function that moves elevator
    {
 	
-	   byte data[] = new byte[1];
+	   byte data[] = new byte[1];	// current floor of elevator
 	
 	   
 	   while (true) {
@@ -302,11 +296,12 @@ elevatorPacket = new DatagramPacket(data,data.length);
 		}
 	   
 
-	  
-	  
+	
 
 
-	   if (currentFloor == n) {
+	   if ((int)data[0] == n) {
+		
+		  
 		   try {
 			elevatorPacket = new DatagramPacket(StopEngineCommandByte,StopEngineCommandByte.length,InetAddress.getLocalHost(),5005);
           } catch (UnknownHostException e) {
@@ -323,7 +318,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
 	    
 }
 	   
-	   if (currentFloor>n) {
+	   else  if ((int)data[0]>n) {
 	
 		   try {
 		   elevatorPacket = new DatagramPacket(moveDownCommandByte,moveDownCommandByte.length,InetAddress.getLocalHost(),5005);
@@ -331,12 +326,12 @@ elevatorPacket = new DatagramPacket(data,data.length);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		   currentFloor--;
+		  
 
 		  
 		   
 	   }
-	   else if(currentFloor<n) {
+	   else if  ((int)data[0]<n)  {
 
 		   try {
 			   elevatorPacket = new DatagramPacket(moveUpCommandByte,moveUpCommandByte.length,InetAddress.getLocalHost(),5005);
@@ -344,7 +339,7 @@ elevatorPacket = new DatagramPacket(data,data.length);
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
-		   currentFloor++;
+		
 		   
 		  
 	   }

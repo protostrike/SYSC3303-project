@@ -4,7 +4,7 @@ import java.util.*;
 
 public class FloorSubsystem {
 	
-	int numFloors =10;
+	int numFloors =10;								// number of floors in building
 	ArrayList<floor> floors;
 	LinkedList <Person> requests;
 	DatagramPacket sendPacket,receivePacket;
@@ -12,7 +12,6 @@ public class FloorSubsystem {
 	String upOrDownPressed ;
 	String upOrDownLamp;
 	String direction; //of elevator
-	//Boolean arrivalSensor;
 	String time;
 	Scanner x;
 	int currentFloor;
@@ -34,7 +33,8 @@ public class FloorSubsystem {
 			
 			Person p = new Person(time,currentFloor,desiredFloor,upOrDownPressed.trim().equals("up")?true:false);
 			
-			floors.get(currentFloor-1).setButtonPressed(upOrDownPressed); //updates buttons pressed per floor
+			floors.get(currentFloor-1).setButtonPressed(upOrDownPressed);
+		     System.out.println("floor "+currentFloor+" pressed button "+upOrDownPressed+" to floor "+desiredFloor);//updates buttons pressed per floor
 			floors.get(currentFloor-1).requests.add(p);				      // adds request to floor requests		
 			requests.add(p);                                              // add request to subsystem requests
 		}
@@ -83,7 +83,6 @@ public class FloorSubsystem {
 		File f = new File("data.txt");
 		getData(f);
 		
-		System.out.println(floors);
 		
 		
 	}
@@ -121,8 +120,7 @@ public class FloorSubsystem {
 		     
 		     
 		     
-		     
-		     // assuming scheduler sends elevator status ??
+		   
 		    
 		     byte data[] = new byte[500];
 		     receivePacket = new DatagramPacket (data,data.length);
@@ -192,9 +190,9 @@ class floorHandler implements Runnable
 	
 	@Override
 	public void run() {
-		
+		while (true) {
 			floorSubsystem.start();
-			
+		}
 		
 	}
 }
