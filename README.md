@@ -9,7 +9,7 @@ Iteration #1: Adding subsystems and establish connections
 
 ----------------------------------------------------------------------
 
-Testing: Using three different ports on ONE PC for testing (22,23,24)
+Testing: Using three different ports on ONE PC for testing
 
 Qingchen(Alex): Test cases, UML, documentation
 

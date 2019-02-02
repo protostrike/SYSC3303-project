@@ -1,8 +1,5 @@
-// SimpleEchoClient.java
-// This class is the client side for a simple echo server based on
-// UDP/IP. The client sends a character string to the echo server, then waits 
-// for the server to send it back to the client.
-// Last edited January 9th, 2016
+// Elevator subsystem
+// Controlled by scheduler to handle person's request
 
 import java.io.*;
 import java.net.*;

@@ -1,3 +1,6 @@
+// GenerateTestData
+// Generating test request strings to data.txt
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;

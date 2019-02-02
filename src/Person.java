@@ -1,13 +1,13 @@
 public class Person  implements java.io.Serializable{
-	
+
 	String time;
 	int originFloor, destFloor;
 	boolean up;
 	public Person()
 	{
-		
+
 	}
-	
+
 	public String getTime() {
 		return time;
 	}
@@ -49,9 +49,9 @@ public class Person  implements java.io.Serializable{
 	public String toString()
 	{
 		return time + " Origin: "+ originFloor + " Dest: " + destFloor + " Going: " + (up?"Going Up":"Going Down");
-		
+
 	}
-	
-	
+
+
 
 }

@@ -1,12 +1,15 @@
+// Elevator Status
+// Elevator's status, including motor's action, car door, and directions
+
 
 import java.io.Serializable;
 
 public class ElevatorStatus implements Serializable{
 
-	   int currentFloor;
-	   boolean motorOn = false, up, inUse, doorOpen=false;
-	   
-	   public boolean isDoorOpen() {
+	int currentFloor;
+	boolean motorOn = false, up, inUse, doorOpen=false;
+
+	public boolean isDoorOpen() {
 		return doorOpen;
 	}
 
@@ -15,11 +18,11 @@ public class ElevatorStatus implements Serializable{
 	}
 
 	public ElevatorStatus(int currentFloor, boolean motorOn, boolean up) {
-		   super();
-		   this.currentFloor = currentFloor;
-		   this.motorOn = motorOn;
-		   this.up = up;
-		   this.inUse= motorOn;
+		super();
+		this.currentFloor = currentFloor;
+		this.motorOn = motorOn;
+		this.up = up;
+		this.inUse= motorOn;
 	}
 
 	public int getCurrentFloor() {
