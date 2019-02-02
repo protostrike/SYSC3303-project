@@ -11,6 +11,7 @@ public class ElevatorSubsystem {
    int openCloseDoorTime = 3;
    int elevatorSpeed = 5;
    byte[] statusByte;
+   byte lampButton;
 
 
    public ElevatorSubsystem()
@@ -49,6 +50,8 @@ public class ElevatorSubsystem {
 		
 		   }	
 		
+	
+		 
 		  int len = receivePacket.getLength();
 	   
 		  //If its a command byte
@@ -84,13 +87,14 @@ public class ElevatorSubsystem {
 					closeDoor();
 					break;
 				case (byte)7:
+					lampButton = data[1];
 					turnLampOn();
 					break;
 				case (byte)8:
 					turnLampOff();
 					break;
 			  }//switch
-		  }//if
+	
 		  
 		  
 		  if(requestType.equalsIgnoreCase("status requested") )				// if status is asked for..
@@ -220,8 +224,12 @@ public class ElevatorSubsystem {
 	   System.out.println("door opened");
    }
    
-   public void turnLampOn(){}
-   public void turnLampOff(){}
+   public void turnLampOn(){
+	   System.out.println("Lamp "+lampButton+" is on");
+   }
+   public void turnLampOff(){
+	   System.out.println("Lamp "+ lampButton+" is off");
+   }
    
    public static void main(String args[])
    {
