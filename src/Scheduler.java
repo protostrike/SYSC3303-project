@@ -16,7 +16,7 @@ public class Scheduler {
    byte[] StopEngineCommandByte = {(byte)4};
    byte[] openDoorCommandByte = {(byte)5};
    byte[] closeDoorCommandByte = {(byte)6};
-   byte[] turnLampOnCommandByte = {(byte)7};
+   byte[] turnLampOnCommandByte = {(byte)7,0};
    byte[] turnLampOffCommandByte = {(byte)8};
    Calendar cal;
    int currentFloor;
@@ -217,9 +217,8 @@ elevatorPacket = new DatagramPacket(data,data.length);
     	  
     	  
     	  
-    	  
-    	  
-    	  
+         
+          turnLampOnCommandByte[1] = (byte)personList.getFirst().destFloor;
     	  
     	  
     	  if(currentFloor == personList.getFirst().originFloor)
@@ -238,6 +237,25 @@ elevatorPacket = new DatagramPacket(data,data.length);
                      e.printStackTrace();
                      System.exit(1);
                   }
+                  
+                  
+            	  
+                  
+                  
+                  try {
+          			elevatorPacket = new DatagramPacket(this.turnLampOnCommandByte, turnLampOnCommandByte.length
+          					  ,InetAddress.getLocalHost(), 5005);
+          		} catch (UnknownHostException e1) {
+          			// TODO Auto-generated catch block
+          			e1.printStackTrace();
+          		}
+                    try {
+                       elevatorSocket.send(elevatorPacket);
+                    } catch (IOException e) {
+                       e.printStackTrace();
+                       System.exit(1);
+                    }
+                  
               
               floorArrival(personList.getFirst().getDestFloor());	// if requested initial position is where elevator is at
               														// go straight to destination
@@ -264,9 +282,43 @@ elevatorPacket = new DatagramPacket(data,data.length);
                        System.exit(1);
                     }
                     
+                    try {
+              			elevatorPacket = new DatagramPacket(this.turnLampOnCommandByte, turnLampOnCommandByte.length
+              					  ,InetAddress.getLocalHost(), 5005);
+              		} catch (UnknownHostException e1) {
+              			// TODO Auto-generated catch block
+              			e1.printStackTrace();
+              		}
+                        try {
+                           elevatorSocket.send(elevatorPacket);
+                        } catch (IOException e) {
+                           e.printStackTrace();
+                           System.exit(1);
+                        }
+                      
+                    
                 floorArrival(personList.getFirst().getDestFloor());//elevator goes to destination floor
                
     		  }
+    	  
+    	  try {
+    			elevatorPacket = new DatagramPacket(this.turnLampOffCommandByte, turnLampOffCommandByte.length
+    					  ,InetAddress.getLocalHost(), 5005);
+    		} catch (UnknownHostException e1) {
+    			// TODO Auto-generated catch block
+    			e1.printStackTrace();
+    		}
+              try {
+                 elevatorSocket.send(elevatorPacket);
+              } catch (IOException e) {
+                 e.printStackTrace();
+                 System.exit(1);
+              }
+            
+    	  
+    	  
+    	  
+    	  
     	  personList.removeFirst();
     	  System.out.println("\nPerson Dropped off\n");
     	  destinationList.removeFirst();
