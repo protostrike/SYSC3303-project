@@ -1,3 +1,8 @@
+// SimpleEchoClient.java
+// This class is the client side for a simple echo server based on
+// UDP/IP. The client sends a character string to the echo server, then waits 
+// for the server to send it back to the client.
+// Last edited January 9th, 2016
 
 import java.io.*;
 import java.net.*;
@@ -48,16 +53,12 @@ public class ElevatorSubsystem {
 			// TODO Auto-generated catch block
 			   return;
 		
-		   }	
+		   }
+	
 		
 	
 		 
-		  int len = receivePacket.getLength();
-	   
-		  //If its a command byte
-		  if(len == 1)
-		  {	 
-			  switch(data[0])
+			  switch(data[0])				// run operations depending on what byte it receives
 			  {
 			  	case (byte)0:
 					  status = new ElevatorStatus(currentFloor, motorOn, up);
@@ -97,10 +98,13 @@ public class ElevatorSubsystem {
 	
 		  
 		  
-		  if(requestType.equalsIgnoreCase("status requested") )				// if status is asked for..
+		  if(requestType.equalsIgnoreCase("status requested") )				// if status is asked for, send it
 		  {
 			  sendPacket =new DatagramPacket(data, data.length,
 			        receivePacket.getAddress(), 5002);
+			
+	
+			    
 			  // Send the datagram packet to the client via the send socket. 
 			  try {
 			     sendReceiveSocket.send(sendPacket);
@@ -109,13 +113,18 @@ public class ElevatorSubsystem {
 			     System.exit(1);
 			  }
 			
+			
+			  
+			  // We're finished, so close the socket.
+			  //sendReceiveSocket.close();
 			  requestType="";
 		  }
    }
  
 
    
-   //elevator updates scheduler of its current floor whenever it moves or starts the engine
+   // *********elevator updates scheduler of its current floor whenever it moves or starts the engine **********
+   
    public void moveUp()
    {
 	   
@@ -230,6 +239,8 @@ public class ElevatorSubsystem {
    public void turnLampOff(){
 	   System.out.println("Lamp "+ lampButton+" is off");
    }
+   
+   
    
    public static void main(String args[])
    {
