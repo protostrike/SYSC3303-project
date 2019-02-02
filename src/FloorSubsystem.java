@@ -25,7 +25,7 @@ public class FloorSubsystem {
 			System.out.println("File doesnt exist");
 		}
 		
-		while (x.hasNext()) {
+		while (x.hasNext()) {                              //reads input
 			time = x.next();
 			currentFloor = Integer.parseInt(x.next());
 			upOrDownPressed = upOrDownLamp = x.next();
@@ -64,7 +64,7 @@ public class FloorSubsystem {
 		
 		try {
 			sendSocket = new DatagramSocket();
-			receiveSocket = new DatagramSocket(5010);
+			receiveSocket = new DatagramSocket(5010);  //receives on port 5010
 		}catch (SocketException se) {   
 	        se.printStackTrace();
 	        System.exit(1);
@@ -125,7 +125,7 @@ public class FloorSubsystem {
 		     receivePacket = new DatagramPacket (data,data.length);
 		     
 		     try { 
-		         receiveSocket.receive(receivePacket);
+		         receiveSocket.receive(receivePacket);  //receives elevator status from floor
 		      } catch(IOException e) {
 		         e.printStackTrace();
 		         System.exit(1);
