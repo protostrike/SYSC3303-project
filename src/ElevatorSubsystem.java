@@ -1,8 +1,3 @@
-// SimpleEchoClient.java
-// This class is the client side for a simple echo server based on
-// UDP/IP. The client sends a character string to the echo server, then waits 
-// for the server to send it back to the client.
-// Last edited January 9th, 2016
 
 import java.io.*;
 import java.net.*;
@@ -52,15 +47,10 @@ public class ElevatorSubsystem {
 			// TODO Auto-generated catch block
 			   return;
 		
-		   }
-	
+		   }	
 		
 		  int len = receivePacket.getLength();
-		
-		  
-		
-		
-	
+	   
 		  //If its a command byte
 		  if(len == 1)
 		  {	 
@@ -107,9 +97,6 @@ public class ElevatorSubsystem {
 		  {
 			  sendPacket =new DatagramPacket(data, data.length,
 			        receivePacket.getAddress(), 5002);
-			
-	
-			    
 			  // Send the datagram packet to the client via the send socket. 
 			  try {
 			     sendReceiveSocket.send(sendPacket);
@@ -118,10 +105,6 @@ public class ElevatorSubsystem {
 			     System.exit(1);
 			  }
 			
-			
-			  
-			  // We're finished, so close the socket.
-			  //sendReceiveSocket.close();
 			  requestType="";
 		  }
    }
@@ -129,11 +112,6 @@ public class ElevatorSubsystem {
 
    
    //elevator updates scheduler of its current floor whenever it moves or starts the engine
-   
-   
-   
-   
-  
    public void moveUp()
    {
 	   
@@ -244,8 +222,6 @@ public class ElevatorSubsystem {
    
    public void turnLampOn(){}
    public void turnLampOff(){}
-   
-   
    
    public static void main(String args[])
    {
