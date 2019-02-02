@@ -11,12 +11,12 @@ Iteration #1: Adding subsystems and establish connections
 
 Testing: Using three different ports on ONE PC for testing (22,23,24)
 
-Qingchen(Alex): Test cases, UML, documetation
+Qingchen(Alex): Test cases, UML, documentation
 
-Mohamad: Floor 
+Mohamad: Scheduler,FloorSubsystem, ElevatorSubsystem, Floor
 
-Aryan: Scheduler
+Aryan: Scheduler,FloorSubsystem, ElevatorSubsystem, Elevatortatus, Person 
 
-Chengyang: Elevator
+Chengyang: 
 
-Reginald: Support(For now)
+Reginald: State Machine Diagrams
