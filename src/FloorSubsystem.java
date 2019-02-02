@@ -114,10 +114,9 @@ public class FloorSubsystem {
 		        e.printStackTrace();
 		        System.exit(1);
 		     }
-
-		     System.out.println("Packet sent.\n");
-		     System.out.println("waiting for packet from Scheduler...");
-		     
+		  	System.out.println("Floor "+ p.getOriginFloor()+" is pressed "+( p.up?"up":"Down"));
+		  	System.out.println("waiting...");
+		
 		     
 		     
 		   
@@ -153,7 +152,7 @@ public class FloorSubsystem {
 		  }
 		  
 		  System.out.println(es);
-		System.out.println(direction);
+		
 	
 		
 		 
