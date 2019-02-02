@@ -13,7 +13,7 @@ Testing: Using three different ports on ONE PC for testing (22,23,24)
 
 Qingchen(Alex): Test cases, UML, documentation
 
-Mohamad: Floor, FloorSubsystem, Scheduler
+Mohamad: Scheduler, ElevatorSubsystem, Elevatortatus, Floor
 
 Aryan: Scheduler, ElevatorSubsystem, Elevatortatus, Person 
 
