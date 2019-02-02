@@ -3,7 +3,15 @@ Iteration 1
 
 Work documentation
 ----------------------------------------------------
-Please see README.md for detailed works for group members
+Qingchen(Alex): Test cases, UML, documentation
+
+Mohamad: Scheduler,FloorSubsystem, ElevatorSubsystem, Floor
+
+Aryan: Scheduler,FloorSubsystem, ElevatorSubsystem, Elevatortatus, Person 
+
+Chengyang: 
+
+Reginald: State Machine Diagrams
 
 Test setup
 ----------------------------------------------------
