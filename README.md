@@ -19,4 +19,4 @@ Aryan: Scheduler,FloorSubsystem, ElevatorSubsystem, Elevatortatus, Person
 
 Chengyang: 
 
-Reginald: State Machine Diagrams
+Reginald: State Machine Diagrams, code refactoring (making code more modular)
