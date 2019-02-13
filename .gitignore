@@ -38,6 +38,11 @@ local.properties
 *.tar.gz
 *.rar
 
+#MAC OS
+.DS_Store
+.AppleDouble
+.LSOverride
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 >>>>>>> branch 'master' of https://github.com/protostrike/SYSC3303-project
