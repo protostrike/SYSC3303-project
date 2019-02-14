@@ -127,7 +127,7 @@ public class FloorSubsystem {
 		}
 
 		sysctrl.printLog("Floor: Sending packet to Scheduler...:");
-		sysctrl.printLog(p.toString());
+		sysctrl.printLog("Person: " + p.toString());
 
 		try {
 			sendSocket.send(sendPacket);

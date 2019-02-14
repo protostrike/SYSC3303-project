@@ -192,7 +192,7 @@ public class ElevatorSubsystem {
 		{
 		case (byte)0:
 			status = new ElevatorStatus(currentFloor, motorOn, up);
-			requestType = "status requested";		     
+			requestType = "status requested";	     
 			try {
 				data = sysctrl.convertToBytes(status);
 			} catch (IOException e1) {
