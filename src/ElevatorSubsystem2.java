@@ -9,20 +9,20 @@
 import java.io.*;
 import java.net.*;
 
-public class ElevatorSubsystem {
+public class ElevatorSubsystem2 {
 
 	DatagramPacket sendPacket, receivePacket;
 	DatagramSocket sendReceiveSocket;
 	int currentFloor = 1;
 	boolean motorOn = false, up=false, doorOpen= false;
-	int openCloseDoorTime = 1;
-	int elevatorSpeed = 4;
+	int openCloseDoorTime = 3;
+	int elevatorSpeed = 5;
 	byte[] statusByte;
 	byte lampButton;
 
 	Sysctrl sysctrl = new Sysctrl();
 
-	public ElevatorSubsystem()
+	public ElevatorSubsystem2()
 	{
 		try {
 			sendReceiveSocket = new DatagramSocket(sysctrl.getPort("ElevatorSendReceivePort"));
@@ -245,10 +245,10 @@ public class ElevatorSubsystem {
 	}
 }
 
-class ElevatorHandler implements Runnable
+class ElevatorHandler2 implements Runnable
 {
-	private ElevatorSubsystem elevatorSubsystem;
-	public ElevatorHandler(ElevatorSubsystem elevatorSubsystem) {
+	private ElevatorSubsystem2 elevatorSubsystem;
+	public ElevatorHandler2(ElevatorSubsystem2 elevatorSubsystem) {
 		this.elevatorSubsystem = elevatorSubsystem; 
 	}
 
