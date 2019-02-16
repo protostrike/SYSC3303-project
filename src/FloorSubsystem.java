@@ -23,6 +23,9 @@ public class FloorSubsystem {
 	Scanner x;
 	int currentFloor;
 	int desiredFloor;
+	static Calendar now;
+	private static Timer timer;
+	private static long startTime;
 
 	Sysctrl sysctrl = new Sysctrl();
 
@@ -61,6 +64,12 @@ public class FloorSubsystem {
 	public static void main( String args[] )
 	{
 
+		
+		now = Calendar.getInstance();
+        now.set(Calendar.HOUR, 0);
+        now.set(Calendar.MINUTE, 0);
+        now.set(Calendar.SECOND, 0);
+		startTime = System.currentTimeMillis();
 		FloorSubsystem f = new FloorSubsystem();
 		floorHandler h = new floorHandler(f);
 		new Thread(h).start();
@@ -73,13 +82,19 @@ public class FloorSubsystem {
 	 */
 	public synchronized void start() {
 		while (!requests.isEmpty())  {    // sending the first request and so on...
-			sendSingleRequest(requests.remove());
-			// Wait for packet
-			ElevatorStatus es = waitForElevatorStatus();
-
-			//Update all floor arrow lamps
-			updateArrowLamps(es);
+			long duration = System.currentTimeMillis() - startTime;
+			
+			System.out.println(duration);
+			if(requests.getFirst().getTimes().getSeconds() == (int)(duration/100)
+					&& requests.getFirst().getTimes().getMinutes() == (int)(duration/6000)
+					&& requests.getFirst().getTimes().getHours() == (int)(duration/360000))
+			{
+				System.out.println("reached");
+				sendSingleRequest(requests.remove());
+			}
 		}
+
+		
 	}
 
 	/**  
@@ -102,7 +117,7 @@ public class FloorSubsystem {
 			Person p = new Person(time,currentFloor,desiredFloor,upOrDownPressed.trim().equals("up")?true:false);
 
 			floors.get(currentFloor-1).setButtonPressed(upOrDownPressed);
-			sysctrl.printLog("floor "+currentFloor+" pressed button "+upOrDownPressed+" to floor "+desiredFloor);//updates buttons pressed per floor
+			//sysctrl.printLog("floor "+currentFloor+" pressed button "+upOrDownPressed+" to floor "+desiredFloor);//updates buttons pressed per floor
 			floors.get(currentFloor-1).requests.add(p);				      // adds request to floor requests		
 			requests.add(p);                                              // add request to subsystem requests
 		}
@@ -111,6 +126,11 @@ public class FloorSubsystem {
 	}
 
 	private void sendSingleRequest(Person p) {
+		// Wait for packet
+		//ElevatorStatus es = waitForElevatorStatus();
+
+		//Update all floor arrow lamps
+		//updateArrowLamps(es);
 		byte msg[]=null;
 		try {
 			msg = sysctrl.convertToBytes(p);
@@ -127,7 +147,7 @@ public class FloorSubsystem {
 		}
 
 		sysctrl.printLog("Floor: Sending packet to Scheduler...:");
-		sysctrl.printLog(p.toString());
+		sysctrl.printLog("Person: " + p.toString());
 
 		try {
 			sendSocket.send(sendPacket);

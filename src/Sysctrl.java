@@ -26,6 +26,8 @@ public class Sysctrl {
 		put("ElevatorSendReceivePort", 5005);
 		put("ElevatorStatusPort", 5002);
 		put("SchedulerReceiveElevatorPort", 5001);
+		put("2ndelevator",5006);
+		
 	}};
 
 	/***

@@ -16,7 +16,7 @@ public class Scheduler {
 	// Class variables
 
 	DatagramPacket  floorPacket, elevatorPacket;
-	DatagramSocket floorSocket, elevatorSocket, elevatorSocket2;
+	DatagramSocket floorSocket, elevatorSocket, elevatorSocket2, elevatorSocket3, elevatorSocket4;
 
 	LinkedList<Person> personList = new LinkedList<Person>();
 
@@ -44,21 +44,18 @@ public class Scheduler {
 	public Scheduler()
 	{
 		try {
-			//set time to zero for testing purpeses
-			Calendar now = Calendar.getInstance();
-	        now.set(Calendar.HOUR, 0);
-	        now.set(Calendar.MINUTE, 0);
-	        now.set(Calendar.SECOND, 0);
-	        System.out.println(now.getTime());
-	        
 			elevatorSocket = new DatagramSocket(sysctrl.getPort("SchedulerReceiveElevatorPort"));	// socket for receiving floor arrival updates
 			elevatorSocket2 = new DatagramSocket(sysctrl.getPort("ElevatorStatusPort"));   // socket for receiving elevator status
+			//elevatorSocket3 = new DatagramSocket(sysctrl.getPort("SchedulerReceiveElevatorPort"));	// socket for receiving floor arrival updates
+			//elevatorSocket4 = new DatagramSocket(sysctrl.getPort("ElevatorStatusPort"));   // socket for receiving elevator status
 			floorSocket = new DatagramSocket(sysctrl.getPort("floorSendPort")); // socket for receiving floor request
 
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
 		} 
+		
+	//	getRequests(); // get all requests from floor
 	}
 
 	public static void main( String args[] )
@@ -73,7 +70,48 @@ public class Scheduler {
 	// Handle person arrival at elevator door
 	public synchronized void personArrivale()
 	{
+		getRequests(); // adds all requests to personList (list of requests)
+		//Add person to request list
+		if (!personList.isEmpty()) {
+		requestCorrectElevator();
+		sendPersonToFloor();
+		}
+	}
+
+
+	// function that moves elevator, n is floor where elevator is sent to
+	private void floorArrival(int n)		
+	{
+		// A byte array for storing current floor of elevator
+		byte data[] = new byte[1];	
+
+		while (true) {
+			elevatorPacket = new DatagramPacket(data,data.length);
+
+			try {
+				elevatorSocket.receive(elevatorPacket);
+			} catch (IOException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
+			if ((int)data[0] == n) {   // if elevator reaches destination (n)
+				sendElevatorCommand(StopEngineCommandByte);
+				break;
+			}
+			else  if ((int)data[0]>n) {   // if elevator floor is greater than destination ... move down
+				sendElevatorCommand(moveDownCommandByte);
+			}
+			else if  ((int)data[0]<n)  { // if elevator floor is less than destination ... move up
+				sendElevatorCommand(moveUpCommandByte);
+			}
+		}
+	}
+
+	
+	
+	public void getRequests() {
 		byte[] data = new byte[1000];
+		for(int i=0;i<2;i++) {									// get all requests (theres prob a better way of doing this loop)
 		floorPacket = new DatagramPacket(data, data.length);
 		
 		//Wait for person request
@@ -96,59 +134,36 @@ public class Scheduler {
 				//e.printStackTrace();
 			}
 		}
-		//Add person to request list
-		Person person = addPersonToRequestList();
-		//Request elevator for person
-		requestElevator();
-		//Wait until receiving elevator status
-		data = waitForElevatorStatus();
-		//Send elevator to person's floor
-		sendElevatorToPerson(data, person);
-		//Transport person to destination floor
-		sendPersonToFloor();
-
-	}
-
-
-	// function that moves elevator, n is floor where elevator is sent to
-	private void floorArrival(int n, int  current)		
-	{
-		byte data[] = {(byte)0};
-		// current floor of elevator
-
-		while (true) {
-			elevatorPacket = new DatagramPacket(data,data.length);
-
-			try {
-				elevatorSocket.receive(elevatorPacket);
-			} catch (IOException e2) {
-				// TODO Auto-generated catch block
-				e2.printStackTrace();
-			}
-
-			System.out.println("data[0] issss: "+ data[0] + " n iss  "+ n);
-
-			if ((int)data[0] == n) {   // if elevator reaches destination (n)
-				sendElevatorCommand(StopEngineCommandByte);
-				System.out.println("here");
-				break;
-			}
-			else  if ((int)data[0]>n) {   // if elevator floor is greater than destination ... move down
-				sendElevatorCommand(moveDownCommandByte);
-			}
-			else if  ((int)data[0]<n)  { // if elevator floor is less than destination ... move up
-				sendElevatorCommand(moveUpCommandByte);
-			}
-			/*
-			try {
-				elevatorSocket.send(elevatorPacket);
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}*/
-	
+		addPersonToRequestList();
+		
 		}
 	}
+	
+	
+	
+	public void requestCorrectElevator() {
+		ElevatorStatus status = new ElevatorStatus();
+		requestElevator(sysctrl.getPort("ElevatorSendReceivePort"));
+		//Wait until receiving elevator status
+		status = waitForElevatorStatus();
+		if (! status.isInUse())									// if elevator is not in use
+		{
+			currentFloor = status.getCurrentFloor();         //get currentFloor of elevator
+			destinationList.add(personList.getFirst().getDestFloor());		//add to list of destinations
+
+
+			sysctrl.printLog("elevator is on the way");
+			sysctrl.printLog("Sending packet To the elevator:");
+		}
+	}
+		
+		
+		
+		
+	
+	
+	
+	
 
 	private Person addPersonToRequestList() {
 		sysctrl.printLog("Request For Elevator received:");
@@ -162,16 +177,16 @@ public class Scheduler {
 			e1.printStackTrace();
 		}
 
-		sysctrl.printLog(person);
+		sysctrl.printLog("Scheduler received person: " + person.toString());
 		personList.add(person);
 
 		return person;
 	}
 
-	private void requestElevator() {
+	private void requestElevator(int port) {
 		try {
 			elevatorPacket = new DatagramPacket(statusByte, statusByte.length,
-					InetAddress.getLocalHost(), sysctrl.getPort("ElevatorSendReceivePort"));
+					InetAddress.getLocalHost(), port);
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
 		}
@@ -197,11 +212,12 @@ public class Scheduler {
 
 	}
 
-	private byte[] waitForElevatorStatus() {
+	private ElevatorStatus waitForElevatorStatus() {
+		ElevatorStatus status = new ElevatorStatus();
 		byte[] data = new byte[100];
 		elevatorPacket = new DatagramPacket(data,data.length);
 		try {        
-			sysctrl.printLog("Elevator is busy...");
+			//sysctrl.printLog("Elevator is busy...");
 			elevatorSocket2.receive(elevatorPacket); //receives status of elevator
 		} catch (IOException e) {
 			System.out.print("IO Exception: likely:");
@@ -210,20 +226,38 @@ public class Scheduler {
 			System.exit(1);
 		}
 		// Process the received datagram.
-		sysctrl.printLog("Status received:");
+		sysctrl.printLog("Status received:" + elevatorPacket.getData()[0]);
 		int len = elevatorPacket.getLength();
 		// Form a String from the byte array.
 		data = Arrays.copyOfRange(data, 0, len);
 
-		return data;
+		try {
+			status = (ElevatorStatus)sysctrl.convertFromBytes(data) ;
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (! status.isInUse())									// if elevator is not in use
+		{
+			currentFloor = status.getCurrentFloor();         //get currentFloor of elevator
+			destinationList.add(personList.getFirst().getDestFloor());		//add to list of destinations
+
+
+			sysctrl.printLog("elevator is on the way");
+			sysctrl.printLog("Sending packet To the elevator:");
+		}
+	
+				
+		return status;
 	}
 
 	private void sendElevatorToPerson(byte[] data, Person person) {
-		
 		try {
-			
 			//prepare floorpacket to send to floor
-			floorPacket = new DatagramPacket(elevatorPacket.getData(),elevatorPacket.getLength(),InetAddress.getLocalHost(),sysctrl.getPort("floorReceivePort"));
+			floorPacket = new DatagramPacket(data,data.length,InetAddress.getLocalHost(),sysctrl.getPort("floorReceivePort"));
 		} catch (UnknownHostException e2) {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
@@ -249,52 +283,38 @@ public class Scheduler {
 		}
 		sysctrl.printLog(status);
 
-		if (! status.isInUse())									// if elevator is not in use
-		{
-			this.currentFloor = status.getCurrentFloor();         //get currentFloor of elevator
-			this.destinationList.add(person.getDestFloor());		//add to list of destinations
-
-
-			sysctrl.printLog("elevator is on the way");
-			sysctrl.printLog( "Sending packet To the elevator:");
-		}
 	}
 
 	private void sendPersonToFloor() {
-		sysctrl.printLog("\nPicking person up...\n");
 		sendElevatorCommand(StartEngineCommandByte);
 
 		turnLampOnCommandByte[1] = (byte)personList.getFirst().destFloor;  //what lamp to turn on
-
+		sysctrl.printLog("current floor " + currentFloor);
 		//if elevator is on the same floor as requested initial floor
 		if(currentFloor == personList.getFirst().originFloor) 
 		{
-
 			sendElevatorCommand(openDoorCommandByte);
 			sendElevatorCommand(closeDoorCommandByte);
 
 			sendElevatorCommand(this.turnLampOnCommandByte);
 			// go straight to destination floor
-			floorArrival(personList.getFirst().getDestFloor(), currentFloor);	
+			floorArrival(personList.getFirst().getDestFloor());	
 
 		}
 
-		else   {
+		else {
 			//elevator goes to requested floor (where request is coming from)
-			//System.out.println("requested isssss" + personList.getFirst().getOriginFloor());
-			floorArrival(personList.getFirst().getOriginFloor(),currentFloor);
-
+			floorArrival(personList.getFirst().getOriginFloor());
 			sendElevatorCommand(StartEngineCommandByte);
 			sendElevatorCommand(this.turnLampOnCommandByte);
 			//elevator goes to destination floor
-			
-			floorArrival(personList.getFirst().getDestFloor(), currentFloor);
+			floorArrival(personList.getFirst().getDestFloor());
 		}
 		sendElevatorCommand(turnLampOffCommandByte);
 
 		//remove request from queue
 		personList.removeFirst();
-		sysctrl.printLog("\nPerson Dropped off\n");
+		sysctrl.printLog("Person Dropped off\n");
 		destinationList.removeFirst();
 	}
 	

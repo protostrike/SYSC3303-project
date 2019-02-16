@@ -1,0 +1,9 @@
+scheduler
+
+	requestCorrectElevator() - function that controls which elevator is used for each request.
+
+	there are currently 2 elevators that are running with different ports (5005 and 5006)
+
+	getrequests() - gets all requests from floor immediatley and stores them in personList
+
+	The for loop in the getrequests() function is just there for testing and can be replaced with a while loop later

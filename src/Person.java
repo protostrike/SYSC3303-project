@@ -1,3 +1,5 @@
+import java.sql.Time;
+
 /**
  * Person Class represents a person attempting to use the elevator in the Simulation
  */
@@ -6,6 +8,16 @@ public class Person  implements java.io.Serializable{
 
 	// Class Variables
 	String time;
+	public Time getTimes() {
+		return times;
+	}
+
+	public void setTimes(Time times) {
+		this.times = times;
+	}
+
+
+	Time times;
 	int originFloor, destFloor;
 	boolean up;
 
@@ -29,6 +41,9 @@ public class Person  implements java.io.Serializable{
 		this.originFloor = originFloor;
 		this.destFloor = destFloor;
 		this.up = up;
+		System.out.println(time.substring(0, 2) + "-"+time.substring(3, 5)+"-"+time.substring(6, 8));
+		times = new Time((int)Math.ceil(Integer.parseInt(time.substring(0, 2))), (int)Math.ceil(Integer.parseInt(
+				time.substring(3, 5))),(int)Math.ceil( Double.parseDouble(time.substring(6, 10))));
 	}
 
 	//////////////	ACCESSOR AND MUTATOR METHODS	/////////////////

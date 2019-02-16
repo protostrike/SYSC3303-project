@@ -16,16 +16,19 @@ public class ElevatorSubsystem {
 	int currentFloor = 1;
 	boolean motorOn = false, up=false, doorOpen= false;
 	int openCloseDoorTime = 1;
-	int elevatorSpeed = 4;
+	int elevatorSpeed = 1;
 	byte[] statusByte;
 	byte lampButton;
+	int id;
 
-	Sysctrl sysctrl = new Sysctrl();
+	static Sysctrl sysctrl = new Sysctrl();
 
-	public ElevatorSubsystem()
-	{
+	public ElevatorSubsystem(int port) {
+	id = (port==5005?1:2);
+	
+	
 		try {
-			sendReceiveSocket = new DatagramSocket(sysctrl.getPort("ElevatorSendReceivePort"));
+			sendReceiveSocket = new DatagramSocket(port);
 		} catch (SocketException se) {   // Can't create the socket.
 			se.printStackTrace();
 			System.exit(1);
@@ -34,11 +37,15 @@ public class ElevatorSubsystem {
 
 	public static void main(String args[])
 	{
-		Thread elevatorThread;
-		ElevatorSubsystem c = new ElevatorSubsystem();
+		Thread elevatorThread,elevatorThread2;
+		ElevatorSubsystem c = new ElevatorSubsystem(sysctrl.getPort("ElevatorSendReceivePort"));
+		ElevatorSubsystem c2 = new ElevatorSubsystem(sysctrl.getPort("2ndelevator"));
 		ElevatorHandler elevatorHandler = new ElevatorHandler(c);
+		ElevatorHandler elevatorHandler2 = new ElevatorHandler(c2);
 		elevatorThread = new Thread(elevatorHandler, "New request");
+		elevatorThread2 = new Thread(elevatorHandler2, "New request");
 		elevatorThread.start();
+		elevatorThread2.start();
 	}
 
 	
@@ -65,7 +72,7 @@ public class ElevatorSubsystem {
 	 */
 	private void start()
 	{
-		sysctrl.printLog("Starting engine (at floor"+currentFloor+")");
+		sysctrl.printLog("Elevator "+id+": Starting engine (at floor"+currentFloor+")");
 		this.motorOn= true;
 
 		sendElevatorStatus();
@@ -76,7 +83,7 @@ public class ElevatorSubsystem {
 	 */
 	private void stop()
 	{
-		sysctrl.printLog("Stopping engine at floor"+currentFloor);
+		sysctrl.printLog("Elevator "+id+": Stopping engine at floor"+currentFloor);
 		this.motorOn= false;
 		openOrCloseDoor("open");
 		openOrCloseDoor("close");
@@ -109,11 +116,11 @@ public class ElevatorSubsystem {
 		Boolean doorOpen = null;
 
 		if(doorStatusRequest.equals("open")) {
-			sysctrl.printLog("Opening door");
+			sysctrl.printLog("Elevator "+id+": Opening door");
 			doorOpen = true;
 		}
 		else if(doorStatusRequest.equals("close")) {
-			sysctrl.printLog("closing door");
+			sysctrl.printLog("Elevator "+id+": closing door");
 			doorOpen = false;
 		}
 		//TODO: Error handling
@@ -132,9 +139,9 @@ public class ElevatorSubsystem {
 
 		this.doorOpen = doorOpen;
 		if(doorOpen)
-			sysctrl.printLog("door opened");
+			sysctrl.printLog("Elevator "+id+": door opened");
 		else
-			sysctrl.printLog("door closed");
+			sysctrl.printLog("Elevator "+id+": door closed");
 	}
 
 	/**
@@ -142,7 +149,7 @@ public class ElevatorSubsystem {
 	 * @param s - lamp status (on or off)
 	 */
 	private void turnLampOnOrOff(String s) {
-		sysctrl.printLog("Lamp "+lampButton+" is " + s);
+		sysctrl.printLog("Elevator "+id+": Lamp "+lampButton+" is " + s);
 	}
 
 	/**
@@ -165,7 +172,7 @@ public class ElevatorSubsystem {
 			currentFloor--;
 		}
 
-		sysctrl.printLog("moving " + s + " to floor"+currentFloor);
+		sysctrl.printLog("Elevator "+id+": moving " + s + " to floor"+currentFloor);
 		
 		byte [] floorArival = {(byte)currentFloor};
 		try {
@@ -192,7 +199,7 @@ public class ElevatorSubsystem {
 		{
 		case (byte)0:
 			status = new ElevatorStatus(currentFloor, motorOn, up);
-			requestType = "status requested";		     
+			requestType = "status requested";	     
 			try {
 				data = sysctrl.convertToBytes(status);
 			} catch (IOException e1) {
