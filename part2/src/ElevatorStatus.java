@@ -20,6 +20,9 @@ public class ElevatorStatus implements Serializable{
 
 	//Class variables
 
+	/**
+	 * 
+	 */
 	int currentFloor;
 	boolean motorOn = false, up, inUse, doorOpen=false;
 

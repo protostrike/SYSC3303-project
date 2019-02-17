@@ -34,9 +34,9 @@ public class Scheduler {
 
 	Sysctrl sysctrl = new Sysctrl();
 
-	int currentFloor;
+	int portChosen;
 
-	LinkedList<Integer> destinationList = new LinkedList<Integer>();
+//	LinkedList<Integer> destinationList = new LinkedList<Integer>();
 
 	/*
 	 * Constructor
@@ -68,17 +68,18 @@ public class Scheduler {
 	// Handle person arrival at elevator door
 	public synchronized void personArrivale()
 	{
+		ElevatorStatus s = new ElevatorStatus();
 		getRequests(); // adds all requests to personList (list of requests)
 		//Add person to request list
 		if (!personList.isEmpty()) {
-		requestCorrectElevator();
-		sendPersonToFloor();
+		s = requestCorrectElevator();
+		sendPersonToFloor(s,portChosen);
 		}
 	}
 
 
 	// function that moves elevator, n is floor where elevator is sent to
-	private void floorArrival(int n)		
+	private void floorArrival(int n, int port)		
 	{
 		// A byte array for storing current floor of elevator
 		byte data[] = new byte[1];	
@@ -93,14 +94,14 @@ public class Scheduler {
 				e2.printStackTrace();
 			}
 			if ((int)data[0] == n) {   // if elevator reaches destination (n)
-				sendElevatorCommand(StopEngineCommandByte);
+				sendElevatorCommand(StopEngineCommandByte,port);
 				break;
 			}
 			else  if ((int)data[0]>n) {   // if elevator floor is greater than destination ... move down
-				sendElevatorCommand(moveDownCommandByte);
+				sendElevatorCommand(moveDownCommandByte,port);
 			}
 			else if  ((int)data[0]<n)  { // if elevator floor is less than destination ... move up
-				sendElevatorCommand(moveUpCommandByte);
+				sendElevatorCommand(moveUpCommandByte,port);
 			}
 		}
 	}
@@ -139,24 +140,36 @@ public class Scheduler {
 	
 	
 	
-	public void requestCorrectElevator() {
-		ElevatorStatus status = new ElevatorStatus();
+	public ElevatorStatus requestCorrectElevator() {
+		int eFloor,distance,floor = personList.getFirst().getOriginFloor();
+		ElevatorStatus[] status = new ElevatorStatus[2];
 		requestElevator(sysctrl.getPort("ElevatorSendReceivePort"));
-		//Wait until receiving elevator status
-		status = waitForElevatorStatus();
-		if (! status.isInUse())									// if elevator is not in use
-		{
-			currentFloor = status.getCurrentFloor();         //get currentFloor of elevator
-			destinationList.add(personList.getFirst().getDestFloor());		//add to list of destinations
-
-
-			sysctrl.printLog("elevator is on the way");
-			sysctrl.printLog("Sending packet To the elevator:");
+		status[0] = waitForElevatorStatus();
+		eFloor = status[0].getCurrentFloor();
+		distance = elevatorDistance(floor,eFloor);
+		System.out.println(distance);
+		
+		requestElevator(sysctrl.getPort("2ndelevator"));
+		status[1] = waitForElevatorStatus();
+		eFloor = status[1].getCurrentFloor();
+		System.out.println(elevatorDistance(floor,eFloor));
+		
+		if (distance<=elevatorDistance(floor,eFloor)) {
+			portChosen = sysctrl.getPort("ElevatorSendReceivePort");
+			System.out.println("elevator 1 was picked");
+			return status[0];
+		}
+		else {
+			System.out.println("elevator 2 chosen");
+		portChosen = sysctrl.getPort("2ndelevator");
+		return status[1];
 		}
 	}
 		
 		
-		
+		public int elevatorDistance(int a,int b) {
+			return Math.max(a, b)-Math.min(a, b);
+		}
 		
 	
 	
@@ -238,87 +251,48 @@ public class Scheduler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (! status.isInUse())									// if elevator is not in use
-		{
-			currentFloor = status.getCurrentFloor();         //get currentFloor of elevator
-			destinationList.add(personList.getFirst().getDestFloor());		//add to list of destinations
-
-
-			sysctrl.printLog("elevator is on the way");
-			sysctrl.printLog("Sending packet To the elevator:");
-		}
+		
 	
 				
 		return status;
 	}
 
-	private void sendElevatorToPerson(byte[] data, Person person) {
-		try {
-			//prepare floorpacket to send to floor
-			floorPacket = new DatagramPacket(data,data.length,InetAddress.getLocalHost(),sysctrl.getPort("floorReceivePort"));
-		} catch (UnknownHostException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}		
-		sysctrl.printLog("Sending to floor...");            // send status back to floor
-		try {
-			floorSocket.send(floorPacket);
-		} catch (IOException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
 
-		ElevatorStatus status = new ElevatorStatus();
-
-		try {
-			status = (ElevatorStatus) sysctrl.convertFromBytes(data);  //create status object from received status from elevator
-		} catch (ClassNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		sysctrl.printLog(status);
-
-	}
-
-	private void sendPersonToFloor() {
-		sendElevatorCommand(StartEngineCommandByte);
+	private void sendPersonToFloor(ElevatorStatus s,int port) {
+		sendElevatorCommand(StartEngineCommandByte,port);
 
 		turnLampOnCommandByte[1] = (byte)personList.getFirst().destFloor;  //what lamp to turn on
-		sysctrl.printLog("current floor " + currentFloor);
+		sysctrl.printLog("current floor " + s.currentFloor);
 		//if elevator is on the same floor as requested initial floor
-		if(currentFloor == personList.getFirst().originFloor) 
+		if(s.currentFloor == personList.getFirst().originFloor) 
 		{
-			sendElevatorCommand(openDoorCommandByte);
-			sendElevatorCommand(closeDoorCommandByte);
+			sendElevatorCommand(openDoorCommandByte,port);
+			sendElevatorCommand(closeDoorCommandByte,port);
 
-			sendElevatorCommand(this.turnLampOnCommandByte);
+			sendElevatorCommand(this.turnLampOnCommandByte,port);
 			// go straight to destination floor
-			floorArrival(personList.getFirst().getDestFloor());	
+			floorArrival(personList.getFirst().getDestFloor(),port);	
 
 		}
 
 		else {
 			//elevator goes to requested floor (where request is coming from)
-			floorArrival(personList.getFirst().getOriginFloor());
-			sendElevatorCommand(StartEngineCommandByte);
-			sendElevatorCommand(this.turnLampOnCommandByte);
+			floorArrival(personList.getFirst().getOriginFloor(),port);
+			sendElevatorCommand(StartEngineCommandByte,port);
+			sendElevatorCommand(this.turnLampOnCommandByte,port);
 			//elevator goes to destination floor
-			floorArrival(personList.getFirst().getDestFloor());
+			floorArrival(personList.getFirst().getDestFloor(),port);
 		}
-		sendElevatorCommand(turnLampOffCommandByte);
+		sendElevatorCommand(turnLampOffCommandByte,port);
 
 		//remove request from queue
 		personList.removeFirst();
 		sysctrl.printLog("Person Dropped off\n");
-		destinationList.removeFirst();
 	}
 	
-	private void sendElevatorCommand(byte[] command) {
+	private void sendElevatorCommand(byte[] command, int port) {
 		try {
-			elevatorPacket = new DatagramPacket(command,command.length,InetAddress.getLocalHost(),sysctrl.getPort("ElevatorSendReceivePort"));
+			elevatorPacket = new DatagramPacket(command,command.length,InetAddress.getLocalHost(),port);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
