@@ -474,15 +474,15 @@ public class ElevatorSubsystem {
 			if(decision.equals("y")) {
 				System.out.println("What type of error do you want to inject?");
 				System.out.println("Input 1 for Door stuck.");
-				System.out.println("Input 2 for Operation Delay.");
+				System.out.println("Input 2 for Time out.");
 				System.out.println("Input 3 for Accidently shut down.");
 			}else {
 				return;
 			}
 			switch(sca.nextInt()) {
-				case 1: status.setDoorOpen(true);break;
-				case 2: status.setInUse(false);break;
-				case 3: status.setInUse(false);break;
+				case 1: status.setWorkingStatus(-1);status.setInUse(false);break;
+				case 2: status.setWorkingStatus(-2);status.setInUse(false);break;
+				case 3: status.setWorkingStatus(-3);status.setInUse(false);break;
 				default: break;
 			}
 		} catch (Exception e) {
