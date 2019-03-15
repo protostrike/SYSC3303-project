@@ -466,6 +466,7 @@ public class ElevatorSubsystem {
 	 */
 	private void updateStatusToScheduler() {
 		byte[] data = new byte[100];
+		int errorDecision;
 		
 		try {
 			Scanner sca = new Scanner(System.in);
@@ -479,11 +480,28 @@ public class ElevatorSubsystem {
 			}else {
 				return;
 			}
-			switch(sca.nextInt()) {
-				case 1: status.setWorkingStatus(-1);status.setInUse(false);break;
-				case 2: status.setWorkingStatus(-2);status.setInUse(false);break;
-				case 3: status.setWorkingStatus(-3);status.setInUse(false);break;
-				default: break;
+			
+			errorDecision = sca.nextInt();
+			
+			switch(errorDecision) {
+				case 1: 
+					status.setWorkingStatus(-1);
+					status.setInUse(false);
+					status.setMotorOn(false);
+					status.setDoorOpen(false);
+					break;
+				case 2: 
+					status.setWorkingStatus(-2);
+					status.setMotorOn(false);
+					status.setInUse(false);
+					break;
+				case 3: 
+					status.setWorkingStatus(-3);
+					status.setMotorOn(false);
+					status.setInUse(false);
+					break;
+				default: 
+					break;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -510,6 +528,8 @@ public class ElevatorSubsystem {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+
 	}
 }
 

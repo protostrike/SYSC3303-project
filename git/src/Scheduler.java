@@ -169,6 +169,7 @@ public class Scheduler {
 		//Wait for elevator status update
 		byte[] data = new byte[500];
 		DatagramPacket esPacket = new DatagramPacket(data, data.length);
+		
 
 		try {
 			elevatorSocket2.setSoTimeout(2);
@@ -177,6 +178,22 @@ public class Scheduler {
 				ElevatorStatus es;
 				try {
 					es = (ElevatorStatus) sysctrl.convertFromBytes(esPacket.getData());
+					
+					switch(es.workingStatus) {
+					case -1: 
+						System.out.println("Elevator door stuck, keep waiting!");
+						waitForStatus();
+						return;
+					case -2:
+						System.out.println("Elevator not responding, keep waiting!");
+						waitForStatus();
+						return;
+					case -3:
+						System.out.println("Elevator broke down, waiting for help!");
+						waitForStatus();
+						return;
+					}
+										
 					updateStatus(es, esPacket.getPort());
 				} catch (ClassNotFoundException e) {
 					// TODO Auto-generated catch block
@@ -212,7 +229,9 @@ public class Scheduler {
 	 * Handle request in list
 	 * Wait if no requests in list
 	 */
-	private void handleRequest() {
+	private void handleRequest() 
+	
+	{
 		
 		//No request
 		/*
@@ -333,6 +352,13 @@ public class Scheduler {
 			}
 		}
 		return i + 1;
+	}
+	
+	/**
+	 * handleError
+	 */
+	public void handleError(int errorType) {
+		
 	}
 }
 
