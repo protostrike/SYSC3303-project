@@ -1,3 +1,6 @@
+// GenerateTestData
+// Generating test request strings to data.txt
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -6,6 +9,10 @@ import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.Date;
 
+
+/**
+ * GenerateTestData class is used for generating test requests in the Elevator Simulation
+ */
 public class GenerateTestData {
 
 	public String timeToString() {
@@ -15,6 +22,10 @@ public class GenerateTestData {
 
 		return timestamp;
 	}
+
+	/**
+	 * The main of GenerateTestData
+	 */
 	public static void main(String args[]) {
 
 		System.out.println("Test file for Iteration 1\n"
