@@ -1,0 +1,372 @@
+import java.io.*;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import sun.awt.SunHints.Value;
+
+/**
+ * The Scheduler is responsible for routing each elevator 
+ * to requested floors. 
+ * 
+ * Scheduler must be prepared to handle 
+ * possible faults and failures in the system
+ */
+public class Scheduler {
+
+	// Class variables
+
+	DatagramPacket  floorPacket, elevatorPacket;
+	DatagramSocket floorSocket, elevatorSocket, elevatorSocket2;
+
+	LinkedList<Person> personList = new LinkedList<Person>();
+	Map<Integer, ElevatorStatus> elevatorStatuses = new HashMap<Integer, ElevatorStatus>();
+	
+
+	byte[] statusByte = {(byte)0};
+	byte[] moveUpCommandByte = {(byte)1};
+	byte[] moveDownCommandByte = {(byte)2};
+	byte[] StartEngineCommandByte = {(byte)3};
+	byte[] StopEngineCommandByte = {(byte)4};
+	byte[] openDoorCommandByte = {(byte)5};
+	byte[] closeDoorCommandByte = {(byte)6};
+	byte[] turnLampOnCommandByte = {(byte)7,0};
+	byte[] turnLampOffCommandByte = {(byte)8};
+
+	Calendar cal;
+
+	Sysctrl sysctrl = new Sysctrl();
+
+	int currentFloor;
+
+	LinkedList<Integer> destinationList = new LinkedList<Integer>();
+
+	/*
+	 * Constructor
+	 */
+	public Scheduler()
+	{
+		for (int i=1;i<=sysctrl.numElevators;i++) {
+			elevatorStatuses.put(i, new ElevatorStatus());
+		}
+		
+		
+		try {
+			elevatorSocket = new DatagramSocket(sysctrl.getPort("SchedulerReceiveElevatorPort"));	// socket for receiving floor arrival updates
+			elevatorSocket2 = new DatagramSocket(sysctrl.getPort("ElevatorStatusPort"));   // socket for receiving elevator status
+			floorSocket = new DatagramSocket(sysctrl.getPort("floorSendPort")); // socket for receiving floor request
+
+		} catch (SocketException se) {
+			se.printStackTrace();
+			System.exit(1);
+		} 
+	}
+
+	public static void main( String args[] )
+	{
+		Thread personThread;
+		Scheduler scheduler = new Scheduler();
+		PersonHandler personHandler = new PersonHandler(scheduler);
+		personThread = new Thread(personHandler, "New request");
+		personThread.start();
+	}
+
+	/**********************New Changes Below**********************/
+	///////////////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * the run method is where we initialize and start the SCHEDULER utility threads
+	 */
+	public void run() {
+
+		/*
+		 * requestWaiter thread receives incoming elevator request
+		 * and stores them in the  
+		 */
+		Thread requestWaiter = new Thread() {
+			
+			public void run() {
+				//synchronized (personList) {
+				while(true) {
+						waitForRequest();
+					//	personList.notifyAll();
+						//System.out.println("Notified");
+						
+			//	}
+				}
+				
+			}
+		};
+
+		/*
+		 * requestHandler thread  
+		 */
+		Thread requestHandler = new Thread() {
+			
+			public void run() {
+				
+				while(true) {
+					handleRequest();
+					
+				
+			}
+			}
+		};
+
+		Thread statusUpdater = new Thread() {
+			public void run() {
+				while(true) {
+					waitForStatus();
+				}
+			}
+		};
+	
+		statusUpdater.start();
+		requestHandler.start();
+		requestWaiter.start();
+		
+	}
+
+	private  void waitForRequest() {
+		
+		synchronized (personList) {
+		byte[] data = new byte[500];
+		DatagramPacket floorPacket = new DatagramPacket(data, data.length);
+
+		//Receive request from floor system
+		//Wait if no new request
+	
+			try {
+				floorSocket.receive(floorPacket);
+				int len = floorPacket.getLength();
+				data = Arrays.copyOfRange(data,0,len);
+				try {
+					personList.add((Person)sysctrl.convertFromBytes(data));
+					
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			System.out.println("request received from floor");
+			
+				personList.notifyAll();
+				
+				
+			try {
+				personList.wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			}
+		
+		} 
+	
+
+	private void waitForStatus() {
+		//Wait for elevator status update
+		byte[] data = new byte[1000];
+		DatagramPacket esPacket = new DatagramPacket(data, data.length);
+
+		try {
+		
+				elevatorSocket2.receive(esPacket);
+				ElevatorStatus es;
+				try {
+					es = (ElevatorStatus) sysctrl.convertFromBytes(esPacket.getData());
+					updateStatus(es, esPacket.getPort());
+					
+					
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} catch (IOException e) {
+				// Some kind of IO Exception
+				return;
+				//e.printStackTrace();
+			}
+
+		} 
+	
+	
+
+	private void updateStatus(ElevatorStatus es, int port) {
+		for(int i = 1; i <= sysctrl.numElevators; i ++) {
+			if(sysctrl.getPort("Elevator"+i) == port) {
+				elevatorStatuses.put(i, es);
+
+				
+				
+			}
+		}
+	}
+
+	/*
+	 * Handle request in list
+	 * Wait if no requests in list
+	 */
+	private void handleRequest() {
+		
+		
+
+	
+		synchronized (personList) {
+			while (personList.isEmpty()) {
+		try {
+			personList.wait();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			}
+			Person currentPerson = personList.remove();
+			sendRequest(currentPerson);
+			System.out.println("Request sent to elevator");
+			personList.notifyAll();
+			
+		}
+	}
+
+	/**
+	 * sendRequest is a method that prepares a datagram packet containing Person data
+	 * that is sent to an Elevator to be store into their requestList
+	 * @param person
+	 */
+	private void sendRequest(Person person) {
+		int id = determineElevator(person);
+
+		//Prepare a DatagramPacket  
+		try {
+			byte[] data;
+			data = sysctrl.convertToBytes(person);
+			DatagramPacket elevatorPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), sysctrl.getPort("Elevator"+id));
+			System.out.println("sending request...");
+			//send packet to appropriate Elevator
+			try {
+				elevatorSocket.send(elevatorPacket);
+			} 
+			
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * determineElevator is a method that iterates across the list of 
+	 * elevators in the system and select the best elevator for a request
+	 *  
+	 * 
+	 * @param person - Person object containing the request info
+	 * @return - the INDEX of the Elevator best suited to fulfill the request
+	 */
+
+		private int determineElevator(Person person) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			System.out.println(elevatorStatuses);
+			if (elevatorStatuses.isEmpty()) {
+				System.out.println("All elevators are unavailable");
+			}
+			
+			Map<Integer, ElevatorStatus> statusList = new HashMap<Integer,ElevatorStatus>();
+			Map<Integer, Integer> distances = new HashMap<Integer,Integer>();
+			for(int i = 1; i <= elevatorStatuses.size(); i++) {
+				if (elevatorStatuses.get(i).fault==0)
+					statusList.put(i,elevatorStatuses.get(i));
+			}
+			
+			
+			int count = 1000;
+			int i = 0;
+			int distance;
+			for(int  es : statusList.keySet()) {
+				
+				if(statusList.get(es).isUp() == person.isUp()) {
+					
+					if(statusList.get(es).getCurrentFloor() <= person.getOriginFloor())
+						return es;
+					else if(statusList.get(es).getCurrentFloor() > person.getOriginFloor()) {
+						
+					}
+					
+						distance = (statusList.get(es).getFarthestDestination() - statusList.get(es).getCurrentFloor()) + 
+								(statusList.get(es).getFarthestDestination() - person.getOriginFloor());
+						if(distance <= count) {
+							count = distance;
+							distances.put(es, count);
+						}
+					
+				}
+				else {
+					if(statusList.get(es).isUp()) {
+						distance = (statusList.get(es).getFarthestDestination() - statusList.get(es).getCurrentFloor()) + 
+								(statusList.get(es).getFarthestDestination() - person.getOriginFloor());
+					}
+					else {
+						distance = (statusList.get(es).getCurrentFloor() - statusList.get(es).getFarthestDestination()) + 
+								(person.getOriginFloor() - statusList.get(es).getFarthestDestination());
+					}
+
+					if(distance <= count) {
+						count = distance;
+						i = es;
+						distances.put(i, count);
+					}
+				}
+			}
+			int z=0;
+			int min=1000;
+			
+			for (int p: distances.keySet()) {
+				if (distances.get(p)<min) {
+					System.out.println(p);
+					z = p;
+					min = distances.get(p);
+				}
+			}
+			
+			return z ;
+		}
+	
+}
+
+
+class PersonHandler implements Runnable
+{
+	private Scheduler scheduler;
+
+	public PersonHandler(Scheduler scheduler) {
+		this.scheduler = scheduler; 
+	}
+
+	@Override
+	public void run() {
+		
+			scheduler.run();
+		
+
+	}
+
+}
