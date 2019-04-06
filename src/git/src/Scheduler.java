@@ -278,10 +278,18 @@ public class Scheduler {
 	 */
 
 		private int determineElevator(Person person) {
-			int selectedEl=0;;
+			int selectedEl=0;
+			
+			Map<Integer,ElevatorStatus> statusList = new HashMap<Integer,ElevatorStatus>();
+			
+			for (int i: elevatorStatuses.keySet()) {
+				if (elevatorStatuses.get(i).fault==0)
+					statusList.put(i, elevatorStatuses.get(i));
+			}
+			
 		
-			for (int i: elevatorStatuses.keySet()){
-				ElevatorStatus e = elevatorStatuses.get(i);
+			for (int i: statusList.keySet()){
+				ElevatorStatus e = statusList.get(i);
 				if (e.up && person.originFloor>e.currentFloor) {
 					selectedEl=i;
 				break;
