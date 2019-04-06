@@ -509,7 +509,7 @@ public class ElevatorSubsystem {
 			
 		
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(2000);	//2s between floors
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -555,21 +555,37 @@ public class ElevatorSubsystem {
 	*/
 	public int getNearestPickup() {				// gets closest destination according to elevators current floor
 		synchronized (status.pickUpList) {
-		int smallestDistance=1000,floor=-1;
-		Iterator<Integer> iter = status.pickUpList.iterator();
-		while (iter.hasNext()) {
-			int p = iter.next();
-			int distance = Math.abs(status.currentFloor-p);
-			if (distance<smallestDistance) {
-				floor = p;
-				smallestDistance =distance; 
-			}
+			int smallestDistanceUp=1000,floorUp=-1;
+			int smallestDistanceDown=1000,floorDown=-1;
 			
-		}
+				for (int i : status.pickUpList) {
+					int distance = Math.abs(status.currentFloor - i);
+						if (distance<smallestDistanceUp && i>=status.currentFloor ) {
+							smallestDistanceUp = distance;
+							floorUp = i;
+						}
+						if (distance<smallestDistanceDown && i<=status.currentFloor ) {
+							smallestDistanceDown = distance;
+							floorDown = i;
+						}
+
+			}
 		
-		return floor;
+				if (status.up) {
+				//	if elevator is going up, return closest floor that is higher than current floor of elevator
+						return floorUp; // returns -1, if there are no higher floors, so elevator will go down and find closest floors
+						
+				}
+				
+				else  {
+				//	if elevator is going down, return closest floor that is under current floor of elevator
+				
+					return floorDown;
+				}
+		
+		
 		}
-		}
+	}
 		
 	
 	/*

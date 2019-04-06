@@ -278,76 +278,29 @@ public class Scheduler {
 	 */
 
 		private int determineElevator(Person person) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			int selectedEl=0;;
+		
+			for (int i: elevatorStatuses.keySet()){
+				ElevatorStatus e = elevatorStatuses.get(i);
+				if (e.up && person.originFloor>e.currentFloor) {
+					selectedEl=i;
+				break;
 			}
-			
-			System.out.println(elevatorStatuses);
-			if (elevatorStatuses.isEmpty()) {
-				System.out.println("All elevators are unavailable");
-			}
-			
-			Map<Integer, ElevatorStatus> statusList = new HashMap<Integer,ElevatorStatus>();
-			Map<Integer, Integer> distances = new HashMap<Integer,Integer>();
-			for(int i = 1; i <= elevatorStatuses.size(); i++) {
-				if (elevatorStatuses.get(i).fault==0)
-					statusList.put(i,elevatorStatuses.get(i));
-			}
-			
-			
-			int count = 1000;
-			int i = 0;
-			int distance;
-			for(int  es : statusList.keySet()) {
-				
-				if(statusList.get(es).isUp() == person.isUp()) {
-					
-					if(statusList.get(es).getCurrentFloor() <= person.getOriginFloor())
-						return es;
-					else if(statusList.get(es).getCurrentFloor() > person.getOriginFloor()) {
-						
-					}
-					
-						distance = (statusList.get(es).getFarthestDestination() - statusList.get(es).getCurrentFloor()) + 
-								(statusList.get(es).getFarthestDestination() - person.getOriginFloor());
-						if(distance <= count) {
-							count = distance;
-							distances.put(es, count);
-						}
-					
+				else if (!e.up && person.originFloor<e.currentFloor) {
+					selectedEl= i;
+					break;
 				}
-				else {
-					if(statusList.get(es).isUp()) {
-						distance = (statusList.get(es).getFarthestDestination() - statusList.get(es).getCurrentFloor()) + 
-								(statusList.get(es).getFarthestDestination() - person.getOriginFloor());
-					}
-					else {
-						distance = (statusList.get(es).getCurrentFloor() - statusList.get(es).getFarthestDestination()) + 
-								(person.getOriginFloor() - statusList.get(es).getFarthestDestination());
-					}
-
-					if(distance <= count) {
-						count = distance;
-						i = es;
-						distances.put(i, count);
-					}
-				}
-			}
-			int z=0;
-			int min=1000;
-			
-			for (int p: distances.keySet()) {
-				if (distances.get(p)<min) {
-					System.out.println(p);
-					z = p;
-					min = distances.get(p);
+				else if (person.originFloor==e.currentFloor) {
+					selectedEl = i;
+					break;
 				}
 			}
 			
-			return z ;
+			
+			return selectedEl;
+			
+			
+		
 		}
 	
 }
