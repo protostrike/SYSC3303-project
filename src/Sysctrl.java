@@ -16,19 +16,50 @@ import java.util.HashMap;
 // System control class
 // All utility functions should go to this class
 // And other class can use functions here
+
 public class Sysctrl {
+	
 	@SuppressWarnings("serial")
 	HashMap<String, Integer> portsMap = new HashMap<String, Integer>(){{
-		put("floorSendPort", 1111);
-		put("floorReceivePort", 2222);
-		put("floorSendPort", 3333);
-		put("floorReceivePort", 4444);
-		put("Elevator",9994);
-		put("Elevator1", 9995);
-		put("Elevator2",9996);
-		put("ElevatorStatusPort", 6666);
-		put("SchedulerReceiveElevatorPort", 7777);
+		
+		
+		/* Elevator */
+		//Number of Elevators in the system
+		put("#_OF_ELEVATORS", 4);
+		//Elevator Subsystem port
+		put("ElevatorSubsystem", 3333);
+		//port for receiving status check requests
+		put("ElevatorStatusPort",6969);
+		//Elevator #x = base + x
+		put("ElevatorBasePort",9700);	
+		
+		
+
+
+		
+		/* Scheduler */
+		//receiving from floor subsystem
+		put("Scheduler<--Floors", 6666);
+		//receiving from elevator subsystem
+		put("Scheduler<--Elevators", 7777);
+		//port for receiving status objects from Elevator system
+		put("SchedulerStatusPort",9696);
+
+		
+		
+		/*Floor */
+		//Number of Floors in the system
+		put("#_OF_FLOORS", 22);
+		
+		put("FloorSubsystem", 2222);
+		
+		//Floor #x = base + x
+		put("FloorBasePort",8800);
+		
+		
+		
 	}};
+	
 
 	/***
 	 * convertFromBytes() takes a byte array input and return and and of object
@@ -39,8 +70,9 @@ public class Sysctrl {
 	 * @throws ClassNotFoundException
 	 */
 	public Object convertFromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
-		try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-				ObjectInput in = new ObjectInputStream(bis)) {
+		
+		try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes); ObjectInput in = new ObjectInputStream(bis)) {
+			
 			return in.readObject();
 		} 
 	}
@@ -54,9 +86,11 @@ public class Sysctrl {
 	 * @throws IOException
 	 */
 	public byte[] convertToBytes(Object object) throws IOException {
-		try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				ObjectOutput out = new ObjectOutputStream(bos)) {
+		
+		try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutput out = new ObjectOutputStream(bos)) {
+			
 			out.writeObject(object);
+			
 			return bos.toByteArray();
 		} 
 	}
@@ -68,6 +102,15 @@ public class Sysctrl {
 	public int getPort(String request) {
 		return portsMap.get(request);
 	}
+	
+	//added by Reggie
+	public int getNumberOfElevators() {
+		return portsMap.get("#_OF_ELEVATORS");
+	}
+	public int getNumberOfFloors() {
+		return portsMap.get("#_OF_FLOORS");
+	}
+	
 
 	public void printLog(String s) {
 		Date date = new Date();

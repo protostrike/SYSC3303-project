@@ -38,7 +38,7 @@ public class Elevator implements Runnable{
 	//Identification of elevator car ; 
 	// - will be used to generate port number
 	// - will be used to label Elevator Thread
-    private static int elevatorID;
+    private int elevatorID;
 	
 	//Floor where the Elevator is located
     private int currentFloor;
@@ -117,6 +117,24 @@ public class Elevator implements Runnable{
      * 
      ********************************************/
     
+    
+    
+    /*
+	 * announces the floor upon arriving
+	 */
+	private void announceFloor() {
+		if(currentFloor == 1)
+			System.out.println(currentFloor + "st FLOOR");
+		else if(currentFloor == 2)
+			System.out.println(currentFloor + "nd FLOOR");
+		else if(currentFloor == 3) {
+			System.out.println(currentFloor + "rd FLOOR");
+		}
+		else 
+			System.out.println(currentFloor + "th FLOOR");
+		
+	}
+    
     /*
      * Used to move the elevator by one floor
      * up or down depending on the input isUp
@@ -161,11 +179,11 @@ public class Elevator implements Runnable{
      * ADD it to the dropOffList and remove it from the pickUpList
      * 
      */
-    public void pickUpPassengers(){
+    public void pickUpPassengers() throws SocketException{
 
         //We find the floor from pickupList
     	//(We initialize just to avoid NULL error)
-        Floor tempFloor = new Floor(0);
+        Floor tempFloor = null;
         
         //local variable for referencing
         int floorNumber;
@@ -277,6 +295,10 @@ public class Elevator implements Runnable{
     
     /***************************ACCESSOR METHODS*******************************/
     
+    
+    public RedefinedStatus getStatus() {
+    	return this.status;
+    }
     
     /*
      *  returns reference the Elevator's motor object

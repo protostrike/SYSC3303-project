@@ -16,6 +16,12 @@ public class ElevatorGUI extends JFrame {
 	private ArrayList<JButton> buttons;
 	
 	private JLabel elevatorID;
+
+	private JLabel speed;
+	
+	private JLabel direction;
+
+
 	
 	
 	/**

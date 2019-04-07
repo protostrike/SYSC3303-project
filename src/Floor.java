@@ -6,7 +6,7 @@ import java.util.*;
  * The Floor class is used to represent floors when 
  * requesting and interacting with the Elevator Simulation
  */
-public class Floor {
+public class Floor implements Runnable {
 
 	/*
      * 
@@ -25,8 +25,12 @@ public class Floor {
 	
 	//private DatagramSocket floorSocket;
 	
-	//private 
+	
+	//Utility class used to convert objects to and from bytes
+	Sysctrl sysctrl = new Sysctrl();
 
+	//socket to send and receive from Scheduler
+	private DatagramSocket sendReceiveSocket;
 
 	/*
      * 
@@ -38,6 +42,7 @@ public class Floor {
     
 	
 	private FloorCallPanel floorPanel;
+	
 
 	
 
@@ -46,18 +51,22 @@ public class Floor {
 	 * Non-default Constructor creates and initializes floor object
 	 * 
 	 * @param n - floor number
+	 * @throws SocketException 
 	 */
-	public Floor(int floorNumber) {
-
+	public Floor(int floorNumber) throws SocketException {
+		
+		//Floor number
 		this.floorNumber = floorNumber;
+		//list of request pending on this floor
 		this.requests = new ArrayList<Person>();
-
-
+		
+		//Establish socket port corresponding to the Floor#
+		sendReceiveSocket = new DatagramSocket( sysctrl.getPort("FloorBasePort") + floorNumber);
 	}
 
 	
 
-	///////////////ACCESSOR//////////////////
+	// Accessor Methods
 	public ArrayList<Person> getRequests(){
 		return this.requests;
 	}
@@ -65,27 +74,39 @@ public class Floor {
 	public int getFloorNumber(){
 		return this.floorNumber;
 	}
-	/////////////////////////////////////////
 	
-	/*
-	 * prepare datagramPacket that is sent to the Scheduler
+	public FloorCallPanel getFloorPanel() {
+		return this.floorPanel;
+	}
+
+	
+	
+	
+	/**
+	 * This method takes a Person obj as argument and returns DatagramPacket
+	 * containing the request info of the person
 	 * 
+	 * 
+	 * @param p - Person who is waiting on floor for elevator
+	 * 
+	 * @return - DatagramPacket containing request info of the Person
+	 * 
+	 * @throws IOException
 	 */
-	public DatagramPacket callElevator(Person p) throws IOException {
+	public DatagramPacket prepareRequest(Person p) throws IOException {
 		
 		//Update the panel (appropriate lamp turns on)	
-		this.floorPanel.makeRequest(p.isUp());
-		
-		//initialize to null (preventing error)
-		Sysctrl helper = null;
-		byte[] requestMessage = helper.convertToBytes(p);
+		//this.floorPanel.makeRequest(p.isUp());
+
+		//convert Person object into byte[]
+		byte[] requestMessage = sysctrl.convertToBytes(p);
 		
 		//initialize to null (preventing error)
 		DatagramPacket request = null;
 		
-		//prepare request packet
+		//prepare request packet to be sent to Scheduler
 		try {
-			request = new DatagramPacket(requestMessage, requestMessage.length, InetAddress.getLocalHost(),helper.getPort("floorSendPort"));
+			request = new DatagramPacket(requestMessage, requestMessage.length, InetAddress.getLocalHost(),sysctrl.getPort("Scheduler<--Floors"));
 			
 		}
 		catch (UnknownHostException e) {
@@ -97,9 +118,12 @@ public class Floor {
 		
 	}
 	
+	public void sendRequestToScheduler(Person p) throws IOException {
+		sendReceiveSocket.send(prepareRequest(p));
+	}
 	
 	/*
-	 * adds a person to the list of pending requeston the Floor
+	 * adds a person to the list of pending request on the Floor
 	 */
 	public void addRequest(Person p){
 		requests.add(p);
@@ -112,7 +136,45 @@ public class Floor {
 	 * toString() represents floor status as string
 	 */
 	public String toString() {
-		return "floor#: "+ floorNumber + '\n';
+		return "Floor #"+ floorNumber + '\n';
 	}
+	
+	
+	
+	
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	//////////////////MAIN AND RUN METHOD///////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	
+	/** 					RUN METHOD
+	 * run() makes use of Threads
+	 *************************************************************/
+	@Override
+	public void run() {
+		
+		Thread RequestReceiver = new Thread() {
+			
+		};
+		
+		
+		
+		Thread	Updater = new Thread() {
+			public void run() {
+				
+				while(true) {
+					//update changes made to gui
+				}
+			}
+		};
+		
+		
+		
+	}
+		
 
 }

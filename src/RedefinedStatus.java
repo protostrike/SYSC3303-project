@@ -47,7 +47,6 @@ public class RedefinedStatus implements Serializable{
 	public boolean isDoorOpen() {
 		return doorOpen;
 	}
-	
 
 	/**
 	 * getCurrentFloor() returns the current floor number
@@ -61,7 +60,9 @@ public class RedefinedStatus implements Serializable{
 	}
 
 	
-
+	public int getID() {
+		return elevatorID;
+	}
 	
 
 	/**

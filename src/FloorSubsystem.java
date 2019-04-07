@@ -9,16 +9,13 @@ import java.util.*;
  * The Floor system manages the floor side interactions
  * of the Elevator Simulation
  */
-public class FloorSubsystem implements Runnable {
+public class FloorSubsystem extends Thread implements Runnable {
 
 	//Attributes of the Floor Subsystem
 	
-	//List of pending requests from all Floors in System
-	ArrayList<Person> requests;
-	
 	
 	// number of floors in building
-	private int numFloors;
+	private int numberOfFloors;
 	
 	// List of Floors accessible  by Elevator
 	ArrayList<Floor> floors;
@@ -49,60 +46,41 @@ public class FloorSubsystem implements Runnable {
 	 * @throws IOException 
 	 * 
 	 */
-	public FloorSubsystem( int numberOfFloors) throws IOException  {
+	public FloorSubsystem() throws IOException  {
 
-		this.numFloors = numberOfFloors;
-		
+		//INIT #OF FLOORS
+		this.numberOfFloors = sysctrl.getNumberOfFloors();
 
+		//INIT LIST OF FLOORS IN SYSTEM
 		floors = new ArrayList<Floor>();
-		
-		// Adds the Floor objects to list in FloorSubsystem
 		for(int i = 1; i <= numberOfFloors; i++) {
 			floors.add(new Floor(i));
 		}
 		
-		//Requests will be retrieved from data.txt
-		File f = new File("data.txt");
-		
-		retrieveRequests(f);
 	}
-
-	
-
-
-	/**
-	 * The start() method is used to initialize the floor subsystem 
-	 * and prepare it for accepting and handling requests
-	 
-	public synchronized void start() {
-		while (!requests.isEmpty())  {    // sending the first request and so on...
-			long duration = System.currentTimeMillis() - startTime;
-		
-			
-			//START TIME OF THE FLOORSUBSYSTEM THREAD
-		}
-	}
-	 */
-		
 		
 		
 	/**
 	 * 
+	 * Extracts the requests to be made from a *.txt file
 	 * 
-	 *   Retrieves data from the the text file f
+	 * THEN sends each request to the Scheduler
+	 * 
 	 * @throws IOException 
 	 *   
 	 */
 	private void retrieveRequests(File f) throws IOException {  //create request
 
 		//origin and destination
-		int floor,desiredFloor;
+		int originFloor,destinationFloor;
 		
 		//We will need to make calls to update the floor's call button lamps
 		String upOrDownPressed;
 		
+		//direction of travel
 		boolean wantsToGoUp;
 		
+		//fault injection
 		int faultCode, faultLocation;
 		
 		try {
@@ -112,7 +90,6 @@ public class FloorSubsystem implements Runnable {
 			sysctrl.printLog("File doesnt exist");
 		}
 
-		
 		//while there is still text in the data.txt
 		while (x.hasNext()) {   
 			
@@ -122,13 +99,13 @@ public class FloorSubsystem implements Runnable {
 			time = x.next();
 			
 			//the starting floor of the request
-			floor = Integer.parseInt(x.next());
+			originFloor = Integer.parseInt(x.next());
 			
 			//the direction of travel
 			upOrDownPressed  = x.next();
 			
 			//parse to get the destination
-			desiredFloor = Integer.parseInt(x.next());
+			destinationFloor = Integer.parseInt(x.next());
 			
 			//parse to get the fault code of the request
 			faultCode = Integer.parseInt(x.next());
@@ -145,128 +122,40 @@ public class FloorSubsystem implements Runnable {
 				wantsToGoUp = false;
 			}
 
-			//create person object who holds request info
-			Person p = new Person( time, floor, desiredFloor, wantsToGoUp);
+			//Create person object who holds request info
+			Person p = new Person( time, originFloor, destinationFloor, wantsToGoUp, faultCode, faultLocation);
 
-			//Call elevator from Floor object
-			floors.get(floor-1).getRequests().add(p);// adds person to list in Floor object	
 			
-			//call elevator returns a Datagram packet
-			sendPacket = floors.get(floor-1).callElevator(p);//index in list is floor#-1
+			//add request to appropriate Floor object
+			//NOTE: *** index in list is floor#-1 ***
+			floors.get(originFloor-1).getRequests().add(p);
 			
-			//send Packet to scheduler
-			try {
-				sendSocket.send(sendPacket);
-			} 
-			catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
+			//Floor containing request sends to Scheduler
+			floors.get(originFloor-1).sendRequestToScheduler(p);
 			
 
-		}
+		}//end of while loop
 		
-
-	}
-
-	private void sendSingleRequest(Person p) {
-		// Wait for packet
-		//ElevatorStatus es = waitForElevatorStatus();
-
-		//Update all floor arrow lamps
-		//updateArrowLamps(es);
-		
-		byte msg[]=null;
-		try {
-			msg = sysctrl.convertToBytes(p);
-		} 
-		catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
-		try {
-			sendPacket = new DatagramPacket(msg,msg.length,InetAddress.getLocalHost(), sysctrl.getPort("floorSendPort"));
-		}
-		catch (UnknownHostException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		sysctrl.printLog("Floor: Sending packet to Scheduler...:");
-		sysctrl.printLog("Person: " + p.toString());
-
-		try {
-			sendSocket.send(sendPacket);
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-		sysctrl.printLog("Floor "+ p.getOriginFloor()+" is pressed "+( p.up?"up":"Down"));
-		sysctrl.printLog("waiting...");
 	}
 	
-	/**
-	 * Wait and return elevator's status
-	 * @return elevator status received from elevator
-	 */
-	private ElevatorStatus waitForElevatorStatus() {
-		byte data[] = new byte[500];
-		receivePacket = new DatagramPacket (data,data.length);
-
-		try { 
-			receiveSocket.receive(receivePacket);  //receives elevator status from floor
-		} catch(IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-		sysctrl.printLog("Packet received\n");
-
-		int len = receivePacket.getLength();
-		data = Arrays.copyOfRange(data,0,len);
-
-		//Get elevator status
-		ElevatorStatus es = new ElevatorStatus();
-
-		try {
-			es = (ElevatorStatus) sysctrl.convertFromBytes(data);
-		}catch(ClassNotFoundException e){
-			e.printStackTrace();
-		}
-		catch(IOException e2){
-			e2.printStackTrace();
-		}
-		return es;
-	}
-
-	/*
-	private void updateArrowLamps(ElevatorStatus es) {
-		direction = (es.up?"up":"Down");
-		for (int i=0;i<numFloors;i++) {
-			// update all floor arrow lamps
-			floors.get(i).direction=direction;
-		}
-
-		sysctrl.printLog(es);
-
-	}
-	*/
-
-
 	
-	
-	////////////////////////////////////////////////////////////
-	//////////////////MAIN AND RUN METHODS//////////////////////
-	////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////
+			//////////////////MAIN AND RUN METHOD///////////////////////
+			////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////
+
 
 	/**
 	 * The main() of FloorSubsystem
 	 * 
 	 * @param args 
+	 * @throws IOException 
 	 */
-	public static void main( String args[] )
-	{
+	public static void main( String args[] ) throws IOException {
 
 		
 		now = Calendar.getInstance();
@@ -274,9 +163,14 @@ public class FloorSubsystem implements Runnable {
         now.set(Calendar.MINUTE, 0);
         now.set(Calendar.SECOND, 0);
 		startTime = System.currentTimeMillis();
-		//FloorSubsystem f = new FloorSubsystem();
-		//floorHandler h = new floorHandler(f);
-		//new Thread(h).start();
+		
+		
+		//We can change the number of Floors in the system 
+		//using the parameter in FloorSubsystem constructor
+		Thread f = new FloorSubsystem();
+		
+		//START runnable FloorSubsystem
+		f.start();
 	}
 	
 	/**
@@ -285,9 +179,19 @@ public class FloorSubsystem implements Runnable {
 	@Override
 	public void run() {
 		
-		while (true) {
-			//floorSubsystem.start();
+		System.out.println("\nFloorSubsystem: sending requests...\n");
+		
+		//request Data is received and sent to Scheduler
+		try {
+			retrieveRequests( new File("data.txt") );
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-
+				
+		while(true) {
+			//Floors interact with rest of system
+		}
 	}
+	
+	
 }

@@ -16,34 +16,26 @@ import java.util.Map;
  * possible faults and failures in the system
  * 
  ************************************************************/
-public class Scheduler {
+public class Scheduler extends Thread{
 
-	// Class variables
-
-	private DatagramPacket  floorPacket, elevatorPacket;
-	private DatagramSocket floorSystemSocket, elevatorSystemSocket;
-
-	private ArrayList<Person> requestList = new ArrayList<Person>();
-	private Map<Integer, ElevatorStatus> elevatorStatuses = new HashMap<Integer, ElevatorStatus>();
+	// Class Attributes
 	
+	//Sockets
+	private DatagramSocket floorSystemSocket, elevatorSystemSocket,statusSocket;
 
-	//byte[] statusByte = {(byte)0};
-	//byte[] moveUpCommandByte = {(byte)1};
-	//byte[] moveDownCommandByte = {(byte)2};
-	//byte[] StartEngineCommandByte = {(byte)3};
-	//byte[] StopEngineCommandByte = {(byte)4};
-	//byte[] openDoorCommandByte = {(byte)5};
-	//byte[] closeDoorCommandByte = {(byte)6};
-	//byte[] turnLampOnCommandByte = {(byte)7,0};
-	//byte[] turnLampOffCommandByte = {(byte)8};
-
+	//list of requests to be assighned
+	private ArrayList<Person> requestList = new ArrayList<Person>();
+	
+	//this is never used...........
+	private Map<Integer, RedefinedStatus> elevatorStatuses = new HashMap<Integer, RedefinedStatus>();
+	
+	//used in assigning requests to elevators
+	private int numberOfElevators;
+	
 	public Calendar cal;
 
 	public Sysctrl sysctrl = new Sysctrl();
 
-	//int currentFloor;
-
-	//LinkedList<Integer> destinationList = new LinkedList<Integer>();
 
 	/**
 	 * Constructor of Scheduler
@@ -51,48 +43,161 @@ public class Scheduler {
 	 * 
 	 * @param numberOfFloors
 	 * @param numberOfElevators
+	 * @throws UnknownHostException 
+	 * @throws SocketException 
 	 * 
 	 ************************************************************/
-	public Scheduler(int numberOfFloors, int numberOfElevators) {
+	public Scheduler() throws UnknownHostException, SocketException {
 		
-		int temp;
+		elevatorSystemSocket = new DatagramSocket(sysctrl.getPort("Scheduler<--Elevators"));
+		floorSystemSocket = new DatagramSocket(sysctrl.getPort("Scheduler<--Floors"));
+		statusSocket = new DatagramSocket(sysctrl.getPort("SchedulerStatusPort"));
+
 		
-		try {
-			//elevatorSystemSocket.send(numberOfElevators);
-		}
-		catch(Exception e) {
+		this.numberOfElevators = sysctrl.getNumberOfElevators();
+		
+		//prepare packet to be sent to ElevatorSubsystem
+		//byte[] msg  = { (byte)numberOfElevators };
+		//DatagramPacket packet = new DatagramPacket(msg,msg.length, InetAddress.getLocalHost(), sysctrl.getPort("SchedulerElevatorPort"));
+		
+		//send packet to ElevatorSubsystem
+		//try {
+		//	elevatorSystemSocket.send(packet);
+		//}
+		//catch(Exception e) {	
+		//}
+	}
+	
+	/**
+	 * 
+	 * this method receives the requests sent to "Scheduler<--Floors" 
+	 * and adds them to requestList
+	 * 
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 */
+	private void receive_requests() throws IOException, ClassNotFoundException {
+		
+		// local var packet only meant to receive data
+		DatagramPacket request = new DatagramPacket(new byte[100],100);
+		
+		// socket bound to port "Scheduler<--Floors"
+		floorSystemSocket.receive(request);
+		
+		// local var Person used to add request to list
+		Person p = (Person)sysctrl.convertFromBytes(request.getData());
+		
+		//add request to list
+		requestList.add(p);
+		
+	}	
+	
+	/**
+	 * this method is used to assign requests to the best elevator
+	 * 
+	 * 
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 * 
+	 *************************************************************************************/
+	private void assign_request_to_elevator() throws IOException, ClassNotFoundException {
+		
+		DatagramPacket packet = null;
+		
+		ArrayList<RedefinedStatus> statuses = new ArrayList<RedefinedStatus>();
+		
+		int bestID = 0 ;
+		int closest_distance = 1000;
+		byte statusRequest[]= {1};
+		
+		
+		//there are requests to be assigned
+		while(!requestList.isEmpty()) {
 			
+			//send packet to signal Elevator subsystem to send statuses of all elevators
+			packet = new DatagramPacket(statusRequest,statusRequest.length,InetAddress.getLocalHost(),sysctrl.getPort("ElevatorStatusPort"));
+			
+			// receive packet for each elevator in system and store into temporary list
+			for(int i = 1;i <= numberOfElevators; i++) {
+				elevatorSystemSocket.receive(packet);
+				statuses.add((RedefinedStatus)sysctrl.convertFromBytes(packet.getData()));
+			}
+			
+			//first closest elevator will be sent a packet
+			for(RedefinedStatus status : statuses) {
+				
+				//quick calculation of the distance between elevator and floor
+				int distance = Math.abs(status.getCurrentFloor() - requestList.get(0).getOriginFloor());
+				
+				//this is the ideal condition
+				if( distance < closest_distance && status.isUp()==requestList.get(0).isUp()) {
+					 closest_distance = distance;
+					 bestID = status.getID();
+				}
+				//this is in case no elevators are going the same direction as request ATM but are still close
+				else if(distance < closest_distance) {
+					 closest_distance = distance;
+					 bestID = status.getID();
+				}
+				
+			}
+			
+			//send request to best Elevator
+			byte[] request = sysctrl.convertToBytes(requestList.get(0));
+			packet = new DatagramPacket(request,request.length,InetAddress.getLocalHost(),sysctrl.getPort("ElevatorBasePort"+bestID));
+			elevatorSystemSocket.send(packet);
+			
+			//Remove request from the the list of pending requests
+			requestList.remove(requestList.get(0));
+						
 		}
 	}
+			
+
 	
-	
-	/**????????????? DO WE NEED A MAIN ??????????????????**/
-	
-	public static void main( String args[] ) {
-		Thread personThread;
-		//Scheduler scheduler = new Scheduler(5,2);
-		//GiveDirections GiveDirections = new GiveDirections(scheduler);
+	/** needs another look
+	 * 
+	 * @return
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	private ArrayList<RedefinedStatus> request_statuses() throws IOException, ClassNotFoundException{
 		
-		//Create a thread that gives directions to the Scheduler
+		//99 is the message that indicates that the eSub must send Scheduler list of statuses
+		byte[] msg = {9};
+		DatagramPacket status = new DatagramPacket(msg,msg.length,InetAddress.getLocalHost(),sysctrl.getPort("ElevatorStatusPort"));
 		
-		//personThread = new Thread(GiveDirections, "New request");
+		ArrayList<RedefinedStatus> eStatusList = new ArrayList<RedefinedStatus>();
 		
-		//personThread.start();
+		//send signal to elevator subsystem to send Scheduler status obj of each elevator
+		statusSocket.send(status);
+		
+		//receive the statuses from ElevatorSubsystem
+		for(int i = 0; i < numberOfElevators; i++) {
+			statusSocket.receive(status);
+			//add status to the list to be returned
+			eStatusList.add((RedefinedStatus)sysctrl.convertFromBytes(status.getData()));
+		}
+		
+		return eStatusList;
 	}
-	/**			??????????????????????????????			**/
+	
 	
 
-   /**
-	* 
-	* 
-	* 
-	* 
-	* the run method is where we initialize and start the SCHEDULER utility threads
-	* 
-	* 
-	* 
-	* 
-	* 
+	
+	
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	//////////////////MAIN AND RUN METHOD///////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////
+   /*************************************************************
+    * 
+    * SCHEDULER RUN() METHOD
+	*
 	**************************************************************/
 	public void run() {
 
@@ -100,18 +205,20 @@ public class Scheduler {
 		 * 
 		 * ReceiverThread thread receives incoming elevator request
 		 *
+		 * Waits for new request,
+		 * converts the request into a Person Object,
+		 * adds person to requestList
 		 *   
 		 ************************************/
 		Thread ReceiverThread = new Thread() {
-			
-			
 			public void run() {
 				
+				System.out.println("\nScheduler: waiting for request...\n");
+				
 				while(true) {
-					
-					
 					try {
-						waitForRequest();
+						//Thread that receives request and places them into requestList
+						receive_requests();
 					} 
 					catch (ClassNotFoundException | IOException e) {
 						e.printStackTrace();
@@ -125,22 +232,26 @@ public class Scheduler {
 
 		
 		/*
-		 * requestHandler thread  
+		 * RequestAssigner thread assigns 
+		 * the first request in the list of request 
+		 * in Scheduler to an Elevator
 		 * 
 		 *************************************/
-		Thread requestHandler = new Thread() {
+		Thread RequestAssigner = new Thread() {
 			
 			public void run() {
 				
-				
-				
 				while(true) {
-					handleRequest();
 					
+					try {
+						assign_request_to_elevator();
+					} catch (ClassNotFoundException | IOException e) {
+						e.printStackTrace();
+					}
 				
+				}
 			}
-			}
-		};//end of RequestHandler thread
+		};//end of requestAssigner thread
 		
 
 		/*
@@ -158,254 +269,12 @@ public class Scheduler {
 		};//end of statusUpdater thread
 		
 		
-		//Start the Scheduler's threads
-		requestHandler.start();
+		//START the Scheduler's threads
 		ReceiverThread.start();
+		RequestAssigner.start();
 		statusUpdater.start();
-	}
-
-	
-	
-	/**
-	 * 
-	 * this method waits for Floor to send a request to packet
-	 * to the Scheduler and converts the request into a Person object
-	 * 
-	 * 
-	 * @throws IOException 
-	 * @throws ClassNotFoundException 
-	 * 
-	 ************************************************************/
-	private  void waitForRequest() throws IOException, ClassNotFoundException {
 		
-		//Prepare Datagram packet
-		byte[] data = new byte[500];
-		DatagramPacket requestFromFloor = new DatagramPacket(data, data.length);
-		
-		//receive Pacekt sent from floor
-		floorSystemSocket.receive(requestFromFloor);
-			
-		// copy contents of packet into local variable 'data'
-		data = Arrays.copyOfRange(data,0,floorPacket.getLength());
-
-				
-		//	!!!!Convert request Data into a Person object!!!!
-		try {
-			Person waitingPerson = (Person)sysctrl.convertFromBytes(data);
-			System.out.println("request received from floor");
-	
-		} 
-		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	} 
-			
-			
-			
-			
-
-	
-	/**
-	 * 
-	 * @param es
-	 * @param port
-	 * 
-	 ************************************************************/
-	private void updateStatus(ElevatorStatus es, int port) {
-		for(int i = 1; i < 3; i ++) {
-			if(sysctrl.getPort("Elevator"+i) == port) {
-				elevatorStatuses.put(i, es);
-				
-			}
-		}
-	}
-
-	/**
-	 * 
-	 * Handle request in list
-	 * Wait if no requests in list
-	 *
-	 ************************************************************/
-	private void handleRequest() {
-		
-		//No request
-		//wait here
-		try {
-			wait();
-		} 
-		catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		/*
-		if(requestList.isEmpty())
-			
-			//wait here
-			try {
-				wait();
-			} 
-			catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		
-		//There is a request in requestList
-		else {
-			
-			while(!requestList.isEmpty()) {
-				Person currentPerson = requestList.getFirst();
-				//
-				assignRequest(currentPerson);
-				//when request is sent, remove for
-				requestList.remove(currentPerson);
-			}
-		}
-		*/
-
-	
-		/*
-		 * synchronized requestList
-		 * 
-		 ***************************/
-		synchronized (requestList) {
-			while (requestList.isEmpty()) {
-		try {
-			requestList.wait();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-			}
-			//Person currentPerson = requestList.remove(requestList.getFirst());
-			//assignRequest(currentPerson);
-			System.out.println("Request sent to elevator");
-			requestList.notifyAll();
-			
-		}
-		//end of synchronized requestList
-	}
-
-	/**
-	 * assignRequest is a method that prepares a datagram packet containing Person data
-	 * that is sent to an Elevator to be store into their requestList
-	 * 
-	 * @param person
-	 * 
-	 ************************************************************/
-	private void assignRequest(Person person) {
-		
-		int id = assignPickUpToElevator(person);
-		//(person);
-
-		
-		//Prepare a DatagramPacket  
-		try {
-			byte[] data;
-			data = sysctrl.convertToBytes(person);
-			DatagramPacket elevatorPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), sysctrl.getPort("Elevator"+id));
-			System.out.println("sending request...");
-			//send packet to appropriate Elevator
-			try {
-				elevatorSystemSocket.send(elevatorPacket);
-			} 
-			
-			catch (IOException e) {
-				e.printStackTrace();
-			}
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	/**		!!!!!!!!!!!!!!!TO BE REMOVED!!!!!!!!!
-	 * 
-	 * 
-	 * assignPickUpToElevator; is a method that iterates across the list of 
-	 * elevators in the system and select the best elevator for a request
-	 *  
-	 * 
-	 * @param person - Person object containing the request info
-	 * @return - the INDEX of the Elevator best suited to fulfill the request
-	 * 
-	 ************************************************************/
-	private int assignPickUpToElevator(Person person) {
-		
-		//local variable status list
-		List<ElevatorStatus> statusList = new ArrayList<ElevatorStatus>();
-		for(int i = 1; i <= 2; i++) {
-			statusList.add(elevatorStatuses.get(i));
-		}
-		
-		//local vars
-		int count = 1000;
-		int i = 0;
-		int distance;
-		
-		
-		for(ElevatorStatus es : statusList) {
-			
-			//if the elevator is going same way as Person
-			if(es.isUp() == person.isUp()) {
-			
-				
-				if(es.getCurrentFloor() <= person.getOriginFloor())
-					return statusList.indexOf(es)+1;
-				
-				else if(es.getCurrentFloor() > person.getOriginFloor()) {
-					distance = (es.getFarthestDestination() - es.getCurrentFloor()) + 
-							(es.getFarthestDestination() - person.getOriginFloor());
-					if(distance <= count) {
-						count = distance;
-						i = statusList.indexOf(es);
-					}
-				}
-			}
-			
-			//if elevator is going up
-			else {
-				if(es.isUp()) {
-					distance = (es.getFarthestDestination() - es.getCurrentFloor()) + 
-							(es.getFarthestDestination() - person.getOriginFloor());
-				}
-				else {
-					distance = (es.getCurrentFloor() - es.getFarthestDestination()) + 
-							(person.getOriginFloor() - es.getFarthestDestination());
-				}
-
-				if(distance <= count) {
-					count = distance;
-					i = statusList.indexOf(es);
-				}
-			}
-		}
-		return i + 1;
-	}
-}
-
-
-
-/**
- * 
- *
- *
- ************************************************************/
-class GiveDirections implements Runnable
-{
-	private Scheduler scheduler;
-
-	public GiveDirections(Scheduler scheduler) {
-		this.scheduler = scheduler; 
-	}
-
-	@Override
-	public void run() {
-		
-			scheduler.run();
-			
-			
-		
-
 	}
 
 }
+

@@ -1,10 +1,11 @@
 import java.sql.Time;
 import java.util.Calendar;
+import java.io.*;
 
 /**
  * Person Class represents a person attempting to use the elevator in the Simulation
  */
-public class Person  implements java.io.Serializable{
+public class Person  implements Serializable{
 
 
 	// Attributes of Person	
@@ -13,20 +14,17 @@ public class Person  implements java.io.Serializable{
 	String time;
 	
 	//Start, destination, fault type and floor where fault occurs
-	int originFloor, destFloor, faultCode, faultLocation;
+	int originFloor, destFloor, faultType, faultLocation;
 	
 	//Direction Person wants to go
 	boolean up;
 
-	/**
-	 * Default constructor creates Person object
-	 */
-	public Person() {
-	}
+	
+	
 
 	/**
 	 * 
-	 * Non-default Constructor creates Person 
+	 * Constructor 1 creates Person 
 	 * 
 	 * @param time - the time request is made
 	 * @param originFloor - source floor of the request
@@ -39,13 +37,30 @@ public class Person  implements java.io.Serializable{
 		this.originFloor = originFloor;
 		this.destFloor = destFloor;
 		this.up = up;
+	}
+	/**
+	 * 
+	 * Constructor creates object of type Person 
+	 * 
+	 * @param time - the time request is made
+	 * @param originFloor - source floor of the request
+	 * @param destFloor - destination of person
+	 * @param up - does this person want to go up or not?
+	 * 
+	 * @param faultType - 0 if no fault
+	 * @param faultLoc - location where an assigned fault occurs
+	 */
+	public Person(String time, int originFloor, int destFloor, boolean up, int faultType, int faultLoc) {
 		
-	//	times = new Calendar((int)Math.ceil(Integer.parseInt(time.substring(0, 2))), (int)Math.ceil(Integer.parseInt(
-		//		time.substring(3, 5))),(int)Math.ceil( Double.parseDouble(time.substring(6, 10))));
-	//	times= Calendar.getInstance();
-		//times.set(Calendar.HOUR_OF_DAY,Integer.parseInt(time.substring(0,2)));
-		//times.set(Calendar.MINUTE,(int)Math.ceil(Integer.parseInt(time.substring(3,5))));
-		//times.set(Calendar.SECOND,(int)Math.ceil(Double.parseDouble(time.substring(6,10))));
+		//calling Person() within this constructor didn't work(smelly code)
+		this.time = time;
+		this.originFloor = originFloor;
+		this.destFloor = destFloor;
+		this.up = up;
+		
+		//for handling faults
+		this.faultType = faultType;
+		this.faultLocation = faultLoc;
 	}
 
 	//////////////	ACCESSOR AND MUTATOR METHODS	/////////////////
