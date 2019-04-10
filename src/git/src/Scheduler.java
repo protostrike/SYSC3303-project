@@ -217,6 +217,15 @@ public class Scheduler {
 					g.repaint();
 					
 				}
+				
+				
+				if (!es.requests.isEmpty() && es.fault==1) {
+					
+					for (int q: es.requests.keySet()) {
+						for (int z=0;z<es.requests.get(q).size();z++)
+						sendRequest(new Person("00:00:10",q,es.requests.get(q).get(z),(q>es.requests.get(q).get(z)?true:false),0,0));
+					}
+				}
 
 			}
 		}

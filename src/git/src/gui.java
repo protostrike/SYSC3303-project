@@ -15,7 +15,7 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 		
 		
 		this.setTitle("Scheduler");
-		this.setSize(500+sysctrl.numElevators*50,50+sysctrl.numFloors * 50);
+		this.setSize((100*sysctrl.numElevators)+sysctrl.numElevators*50,50+sysctrl.numFloors * 50);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setResizable(false);
 		this.setVisible(true);
@@ -56,7 +56,7 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 			
 			JLabel l= new JLabel("Elevator"+(i+1));
 		    Dimension size = l.getPreferredSize();
-			l.setBounds(220+ 90*(i+1),10,size.width,size.height);
+			l.setBounds(220+ 90*(i),10,size.width,size.height);
 			this.add(l);
 			
 			
@@ -64,7 +64,7 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 				for (int j=0;j<requests.get(i).size();j++) {
 					JLabel a = new JLabel(requests.get(i).get(j));
 					Dimension size2 = a.getPreferredSize();
-					a.setBounds(220+ 90*(i),20+ 20*(j+1),size2.width,size2.height);
+					a.setBounds(220+ 90*(i-1),20+ 20*(j+1),size2.width,size2.height);
 					this.add(a);
 				}
 			}
