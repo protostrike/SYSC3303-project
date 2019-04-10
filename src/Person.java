@@ -1,4 +1,5 @@
 import java.sql.Time;
+import java.util.Calendar;
 
 /**
  * Person Class represents a person attempting to use the elevator in the Simulation
@@ -7,18 +8,19 @@ public class Person  implements java.io.Serializable{
 
 
 	// Class Variables
-	String time;
-	public Time getTimes() {
+	
+	public Calendar getTimes() {
 		return times;
 	}
 
-	public void setTimes(Time times) {
+	public void setTimes(Calendar times) {
 		this.times = times;
 	}
-
-
-	Time times;
-	int originFloor, destFloor;
+	
+	
+	Calendar times;
+	String time;
+	int originFloor, destFloor,errType,errFloor;
 	boolean up;
 
 	/**
@@ -36,14 +38,13 @@ public class Person  implements java.io.Serializable{
 	 * @param destFloor - destination of person
 	 * @param up - does this person want to go up or not?
 	 */
-	public Person(String time, int originFloor, int destFloor, boolean up) {
+	public Person(String time, int originFloor, int destFloor, boolean up,int errType,int errFloor) {
 		this.time = time;
 		this.originFloor = originFloor;
 		this.destFloor = destFloor;
 		this.up = up;
-		System.out.println(time.substring(0, 2) + "-"+time.substring(3, 5)+"-"+time.substring(6, 8));
-		times = new Time((int)Math.ceil(Integer.parseInt(time.substring(0, 2))), (int)Math.ceil(Integer.parseInt(
-				time.substring(3, 5))),(int)Math.ceil( Double.parseDouble(time.substring(6, 10))));
+		this.errType=errType;
+		this.errFloor=errFloor;
 	}
 
 	//////////////	ACCESSOR AND MUTATOR METHODS	/////////////////
@@ -86,7 +87,7 @@ public class Person  implements java.io.Serializable{
 	 */
 	public String toString()
 	{
-		return time + " Origin: "+ originFloor + " Dest: " + destFloor + " Going: " + (up?"Going Up":"Going Down");
+		return originFloor + " to " + destFloor;
 
 	}
 

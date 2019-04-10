@@ -3,6 +3,10 @@
 
 import java.io.*;
 import java.net.*;
+import java.sql.Time;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -20,12 +24,15 @@ public class FloorSubsystem {
 	String upOrDownLamp;
 	String direction; //of elevator
 	String time;
+	Time t,z;
 	Scanner x;
 	int currentFloor;
 	int desiredFloor;
+	int errType,errFloor;
 	static Calendar now;
 	private static Timer timer;
 	private static long startTime;
+	Date d;
 
 	Sysctrl sysctrl = new Sysctrl();
 
@@ -63,8 +70,6 @@ public class FloorSubsystem {
 	 */
 	public static void main( String args[] )
 	{
-
-		
 		now = Calendar.getInstance();
         now.set(Calendar.HOUR, 0);
         now.set(Calendar.MINUTE, 0);
@@ -80,19 +85,30 @@ public class FloorSubsystem {
 	 * The start() method is used to initialize the floor subsystem 
 	 * and prepare it for accepting and handling requests
 	 */
-	public synchronized void start() {
-		while (!requests.isEmpty())  {    // sending the first request and so on...
-			long duration = System.currentTimeMillis() - startTime;
+	public void start() {
+		while (!requests.isEmpty())  {
+			long duration = System.currentTimeMillis()-startTime;
+			DateFormat dateFormat = new SimpleDateFormat("hh:mm:ss");
 			
-			System.out.println(duration);
-			if(requests.getFirst().getTimes().getSeconds() == (int)(duration/100)
-					&& requests.getFirst().getTimes().getMinutes() == (int)(duration/6000)
-					&& requests.getFirst().getTimes().getHours() == (int)(duration/360000))
-			{
-				System.out.println("reached");
-				sendSingleRequest(requests.remove());
+			try {
+				d = dateFormat.parse(requests.getFirst().getTime());
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		}
+			
+		Calendar requestTime = Calendar.getInstance();
+		requestTime.setTime(d);
+				
+		if(requestTime.get(Calendar.SECOND)== (int)(duration/1000)
+				&& requestTime.get(Calendar.MINUTE) == (int)(duration/60000)
+				&& requestTime.get(Calendar.HOUR) == (int)(duration/3600000))
+		{
+			System.out.println("reached");
+			sendSingleRequest(requests.remove());
+		}	
+		
+	}
 
 		
 	}
@@ -113,8 +129,10 @@ public class FloorSubsystem {
 			currentFloor = Integer.parseInt(x.next());
 			upOrDownPressed = upOrDownLamp = x.next();
 			desiredFloor = Integer.parseInt(x.next());
+			errType = Integer.parseInt(x.next());
+			errFloor = Integer.parseInt(x.next());
 
-			Person p = new Person(time,currentFloor,desiredFloor,upOrDownPressed.trim().equals("up")?true:false);
+			Person p = new Person(time,currentFloor,desiredFloor,upOrDownPressed.trim().equals("up")?true:false,errType,errFloor);
 
 			floors.get(currentFloor-1).setButtonPressed(upOrDownPressed);
 			//sysctrl.printLog("floor "+currentFloor+" pressed button "+upOrDownPressed+" to floor "+desiredFloor);//updates buttons pressed per floor
@@ -232,9 +250,3 @@ class floorHandler implements Runnable
 
 	}
 }
-
-
-
-
-
-

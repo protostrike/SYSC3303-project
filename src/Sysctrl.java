@@ -17,17 +17,21 @@ import java.util.HashMap;
 // All utility functions should go to this class
 // And other class can use functions here
 public class Sysctrl {
+	int numElevators =5;
+	int numFloors=10;
+	int baseElPort = 9994;
+	
 	@SuppressWarnings("serial")
 	HashMap<String, Integer> portsMap = new HashMap<String, Integer>(){{
-		put("floorSendPort", 5000);
-		put("floorReceivePort", 5010);
-		put("floorSendPort", 5000);
-		put("floorReceivePort", 5010);
-		put("ElevatorSendReceivePort", 5005);
-		put("ElevatorStatusPort", 5002);
-		put("SchedulerReceiveElevatorPort", 5001);
-		put("2ndelevator",5006);
-		
+		put("floorSendPort", 1111);
+		put("floorReceivePort", 2222);
+		put("floorSendPort", 3333);
+		put("floorReceivePort", 4444);
+		//put("Elevator",9994);
+	//	put("Elevator1", 9995);
+		//put("Elevator2",9996);
+		put("ElevatorStatusPort", 6666);
+		put("SchedulerReceiveElevatorPort", 7777);
 	}};
 
 	/***
@@ -60,6 +64,9 @@ public class Sysctrl {
 			return bos.toByteArray();
 		} 
 	}
+	
+	
+	
 	/**
 	 * get port number by certain string input
 	 * @param request - string indicating which port you want
@@ -82,4 +89,15 @@ public class Sysctrl {
 		String currentTime = new Timestamp(time).toString().split(" ")[1];
 		System.out.println("[" + currentTime + "] " + o);
 	}
+	
+	public void initElevators() {
+		for (int i=1;i<=numElevators;i++) {
+			portsMap.put("Elevator"+i,baseElPort+i );
+	}
+	}
+	
+	public Sysctrl() {
+		initElevators();
+	}
+	
 }

@@ -1,5 +1,7 @@
 import java.io.Serializable;
 
+import java.util.*;
+
 /**
  * 
  * Class Elevator Status implements the serialize serializable 
@@ -19,17 +21,26 @@ import java.io.Serializable;
 public class ElevatorStatus implements Serializable{
 
 	//Class variables
-
+	byte fault;
 	int currentFloor;
 	boolean motorOn = false, up, inUse, doorOpen=false;
-
+	int openCloseDoorTime;
+	int elevatorSpeed;
+	//List<Person> carList = new ArrayList<Person>();
+	//List<Integer> pickUp = new ArrayList<Integer>();
+	//List<Integer> dropOff = new ArrayList<Integer>();
+	LinkedList<Integer> pickUpList = new LinkedList<Integer>(); //elevators destintation list
+	Map<Integer,ArrayList<Integer>> requests = new HashMap<Integer,ArrayList<Integer>>();	//map of requests <origin floor, dest floors>
 
 	/***
-	 * Default Contructor of creates object of type ElevatorStatus 
+	 * Default Constructor of creates object of type ElevatorStatus 
 	 */
 	public ElevatorStatus() {
-
-		//No assignments
+		fault =0;
+		currentFloor = 1;
+		openCloseDoorTime = 3;
+		elevatorSpeed = 5;
+		up=true;
 	}
 
 
@@ -41,13 +52,11 @@ public class ElevatorStatus implements Serializable{
 	 * @param motorOn - whether the motor is on or not
 	 * @param up - whether the direction of travel is on or not
 	 */
-	public ElevatorStatus(int currentFloor, boolean motorOn, boolean up) {
+	public ElevatorStatus(int currentFloor,  boolean up) {
 
 		super();
 		this.currentFloor = currentFloor;
-		this.motorOn = motorOn;
 		this.up = up;
-		this.inUse= motorOn;
 
 	}
 
@@ -161,6 +170,31 @@ public class ElevatorStatus implements Serializable{
 		this.inUse = inUse;
 	}
 
+	
+	public int getFarthestDestination() {
+		if(up) {
+			int count = 0;
+			for(int  p : pickUpList) {
+				if(p >= count)
+					count = p;
+			}
+			return count;
+			
+		}	
+	
+		else {
+			int count = 99;
+			for(int p : pickUpList) {
+				if(p <= count)
+					count = p;
+			}
+			return count;
+			
+		}
+		
+		
+	}
+	
 	//////////////////////////////////////////////////
 
 
