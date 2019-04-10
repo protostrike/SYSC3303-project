@@ -87,7 +87,7 @@ public class Person  implements java.io.Serializable{
 	 */
 	public String toString()
 	{
-		return time + " Origin: "+ originFloor + " Dest: " + destFloor + " Going: " + (up?"Going Up":"Going Down");
+		return originFloor + " to " + destFloor;
 
 	}
 

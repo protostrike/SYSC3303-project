@@ -17,7 +17,8 @@ import java.util.HashMap;
 // All utility functions should go to this class
 // And other class can use functions here
 public class Sysctrl {
-	int numElevators =4;
+	int numElevators =5;
+	int numFloors=10;
 	int baseElPort = 9994;
 	
 	@SuppressWarnings("serial")

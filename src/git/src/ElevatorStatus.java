@@ -52,13 +52,11 @@ public class ElevatorStatus implements Serializable{
 	 * @param motorOn - whether the motor is on or not
 	 * @param up - whether the direction of travel is on or not
 	 */
-	public ElevatorStatus(int currentFloor, boolean motorOn, boolean up) {
+	public ElevatorStatus(int currentFloor,  boolean up) {
 
 		super();
 		this.currentFloor = currentFloor;
-		this.motorOn = motorOn;
 		this.up = up;
-		this.inUse= motorOn;
 
 	}
 

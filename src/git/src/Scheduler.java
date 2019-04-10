@@ -20,7 +20,7 @@ import sun.awt.SunHints.Value;
 public class Scheduler {
 
 	// Class variables
-
+	gui g = new gui();
 	DatagramPacket  floorPacket, elevatorPacket;
 	DatagramSocket floorSocket, elevatorSocket, elevatorSocket2;
 
@@ -55,6 +55,10 @@ public class Scheduler {
 			elevatorStatuses.put(i, new ElevatorStatus());
 		}
 		
+		
+		for (int i: elevatorStatuses.keySet()) {
+		g.updateGrid(i, elevatorStatuses.get(i).currentFloor);
+		}
 		
 		try {
 			elevatorSocket = new DatagramSocket(sysctrl.getPort("SchedulerReceiveElevatorPort"));	// socket for receiving floor arrival updates
@@ -206,9 +210,14 @@ public class Scheduler {
 		for(int i = 1; i <= sysctrl.numElevators; i ++) {
 			if(sysctrl.getPort("Elevator"+i) == port) {
 				elevatorStatuses.put(i, es);
+				g.updateGrid(i,es.currentFloor);
+				g.repaint();
+				if (es.fault==1) {
+					g.updateRequests(i,"Stuck");
+					g.repaint();
+					
+				}
 
-				
-				
 			}
 		}
 	}
@@ -247,6 +256,7 @@ public class Scheduler {
 	private void sendRequest(Person person) {
 		int id = determineElevator(person);
 
+		if (id!=0) {
 		//Prepare a DatagramPacket  
 		try {
 			byte[] data;
@@ -265,7 +275,7 @@ public class Scheduler {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		}
 	}
 
 	/**
@@ -283,18 +293,20 @@ public class Scheduler {
 			Map<Integer,ElevatorStatus> statusList = new HashMap<Integer,ElevatorStatus>();
 			
 			for (int i: elevatorStatuses.keySet()) {
-				if (elevatorStatuses.get(i).fault==0)
+				if (elevatorStatuses.get(i).fault==0) 
 					statusList.put(i, elevatorStatuses.get(i));
 			}
 			
 		
 			for (int i: statusList.keySet()){
 				ElevatorStatus e = statusList.get(i);
-				if (e.up && person.originFloor>e.currentFloor) {
+
+				
+				if (e.up &&person.originFloor>e.currentFloor) {
 					selectedEl=i;
 				break;
 			}
-				else if (!e.up && person.originFloor<e.currentFloor) {
+				else if (!e.up && person.originFloor<e.currentFloor ) {
 					selectedEl= i;
 					break;
 				}
@@ -302,8 +314,13 @@ public class Scheduler {
 					selectedEl = i;
 					break;
 				}
-			}
+				
+				}
 			
+			
+			
+			g.updateRequests(selectedEl, person.toString());
+			g.repaint();
 			
 			return selectedEl;
 			
