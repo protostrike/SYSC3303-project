@@ -99,11 +99,11 @@ public class Floor implements Runnable {
 		//this.floorPanel.makeRequest(p.isUp());
 
 		//convert Person object into byte[]
-		byte[] requestMessage = sysctrl.convertToBytes(p);
+		byte[] requestMessage = sysctrl.convertPersonToBytes(p);
 		
 		//initialize to null (preventing error)
 		DatagramPacket request = null;
-		
+				
 		//prepare request packet to be sent to Scheduler
 		try {
 			request = new DatagramPacket(requestMessage, requestMessage.length, InetAddress.getLocalHost(),sysctrl.getPort("Scheduler<--Floors"));
@@ -119,7 +119,13 @@ public class Floor implements Runnable {
 	}
 	
 	public void sendRequestToScheduler(Person p) throws IOException {
+		
 		sendReceiveSocket.send(prepareRequest(p));
+		
+		//DEBUGGING
+		System.out.println("Floor #" + this.floorNumber + ": sent request to Scheduler \n");
+		
+		
 	}
 	
 	/*
@@ -128,8 +134,6 @@ public class Floor implements Runnable {
 	public void addRequest(Person p){
 		requests.add(p);
 	}
-
-
 
 
 	/*

@@ -1,24 +1,24 @@
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 
-// System control class
-// All utility functions should go to this class
-// And other class can use functions here
-
+/**
+ * The Sysctrl (system control) class is mainly meant to be instantiated in a static manner 
+ * to perform conversions from object to bytes and vice versa
+ * 
+ * as well as printLog() calls when debugging the system
+ * 
+ * @author reginaldpradel
+ *
+ */
 public class Sysctrl {
 	
+	
+	/*
+	 *	The following is a port map of the Elevator system
+	 *
+	 * 
+	 */
 	@SuppressWarnings("serial")
 	HashMap<String, Integer> portsMap = new HashMap<String, Integer>(){{
 		
@@ -31,11 +31,8 @@ public class Sysctrl {
 		//port for receiving status check requests
 		put("ElevatorStatusPort",6969);
 		//Elevator #x = base + x
-		put("ElevatorBasePort",9700);	
+		put("ElevatorBasePort",5500);	
 		
-		
-
-
 		
 		/* Scheduler */
 		//receiving from floor subsystem
@@ -46,7 +43,6 @@ public class Sysctrl {
 		put("SchedulerStatusPort",9696);
 
 		
-		
 		/*Floor */
 		//Number of Floors in the system
 		put("#_OF_FLOORS", 22);
@@ -55,45 +51,159 @@ public class Sysctrl {
 		
 		//Floor #x = base + x
 		put("FloorBasePort",8800);
-		
-		
-		
+			
 	}};
 	
-
-	/***
-	 * convertFromBytes() takes a byte array input and return and and of object
-	 * 
-	 * @param bytes - data in byte array to be interpreted
-	 * @return - object corresponding to the data
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	public Object convertFromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
-		
-		try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes); ObjectInput in = new ObjectInputStream(bis)) {
-			
-			return in.readObject();
-		} 
-	}
-
+	
 	/**
-	 * converToBytes() converts input argument object's data 
-	 * into a byte array and returns it
+	 * Returns this Person object to a byte array
 	 * 
-	 * @param object - converts object's data into a byte array
-	 * @return - byte array of corresponding object
-	 * @throws IOException
+	 * @return - byte[]
 	 */
-	public byte[] convertToBytes(Object object) throws IOException {
-		
-		try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutput out = new ObjectOutputStream(bos)) {
-			
-			out.writeObject(object);
-			
-			return bos.toByteArray();
-		} 
+	public byte[] convertPersonToBytes(Person p) {
+		return p.toString().getBytes();
 	}
+	
+	/**				
+	 * Converts byte array into Person Object
+	 * 
+	 * 
+	 * @param b
+	 * @return
+	 */
+	public Person convertBytesToPerson(byte[] b) {		
+		
+		boolean up;
+		
+		String msgParts[] = new String(b).split(" ");
+			
+		//time
+		String time = msgParts[0];
+		
+		//origin floor
+		int origin = Integer.parseInt(msgParts[1]);
+		
+		//direction
+		if(msgParts[2].equals("up")) {up = true;}
+		else {up = false;}
+		
+		//destination
+		int dest = Integer.parseInt(msgParts[3]);
+		
+		//fault type
+		int faultType = Integer.parseInt(msgParts[4]);
+		
+		//fault location
+		int i = Integer.parseInt(msgParts[5].trim());
+		
+		int faultLocation = i;//Integer.parseInt(msgParts[5]);
+		
+		//System.out.println("Reciving: "+Arrays.toString(msgParts));
+		
+		
+		return new Person(time,origin,dest,up,faultType,faultLocation);	
+	}
+	
+	/**
+	 * convertStatusToBytes() converts an input RedefinedStatus 
+	 * into a byte array
+	 * 
+	 * @return - byte[] - byte representation of status
+	 */
+	public byte[] convertStatusToBytes(RedefinedStatus status) {
+		return status.toString().getBytes(); 
+	}
+		
+	public RedefinedStatus convertBytesToStatus(byte[] b) {
+		
+		String statusParts[] = new String(b).split(" ");
+		
+		
+		int elevatorID = Integer.parseInt(statusParts[0].trim()); 
+		int currentFloor = Integer.parseInt(statusParts[1].trim());
+		
+		boolean goingUp, doorOpen, busy, offline; 
+
+		
+		if( statusParts[2].trim().equals("up") ) {goingUp = true;}
+		else {goingUp=false;}
+		
+		if( statusParts[3].trim().equals("open") ) {doorOpen = true;}
+		else {doorOpen=false;}
+		
+		if(statusParts[4].trim().equals("busy")) {busy = true;}
+		else {busy = false;}
+		
+		if(statusParts[5].trim().equals("offline")) {offline = true;}
+		else {offline = false;}
+		
+		return new RedefinedStatus(elevatorID, currentFloor, goingUp, doorOpen, busy, offline);
+	}
+	
+	/**
+	 * combineStatusList() conbines a list of RedefinedStatus objects 
+	 * into one byte array
+	 * 
+	 * @param list - list of RedefinedStatus objects
+	 * @return byte[] - byte representation of RedefinedStatus object list
+	 */
+	public byte[] combineStatusList(List<RedefinedStatus> list) {
+		String s = new String();
+		
+		for(RedefinedStatus status : list ) {
+			s+=status.toString() + "$";
+		}
+		
+		return s.getBytes();
+	}
+	
+	/**
+	 * decdeList() converts what should be a byte representation of a list of statuses 
+	 * and return it as an ArrayList
+	 * 
+	 * @param b - byte representation of RedefinedStatus object list
+	 * @return - ArrayList of RedefinedStatus objects
+	 */
+	public ArrayList<RedefinedStatus> decodeList(byte[] b){
+		
+		ArrayList<RedefinedStatus> list = new ArrayList<RedefinedStatus>();
+		
+		String s = new String(b);
+		
+		String[] statusStrings = s.split("$");
+		
+		//Make a status for each status string
+		for(String str : statusStrings) {
+			String[] statusParts = str.split(" ");
+				
+			//The following parses the data needed to make a status object
+			int elevatorID = Integer.parseInt(statusParts[0].trim()); 
+			
+			int currentFloor = Integer.parseInt(statusParts[1].trim());
+			
+			boolean goingUp, doorOpen, busy, offline; 
+
+			if( statusParts[2].trim().equals("up") ) {goingUp = true;}
+			else {goingUp=false;}
+			
+			if( statusParts[3].trim().equals("open") ) {doorOpen = true;}
+			else {doorOpen=false;}
+			
+			if(statusParts[4].trim().equals("busy")) {busy = true;}
+			else {busy = false;}
+			
+			if(statusParts[5].trim().equals("offline")) {offline = true;}
+			else {offline = false;}
+			
+			//finally we add our status element
+			list.add(new RedefinedStatus(elevatorID, currentFloor, goingUp, doorOpen, busy,offline));
+		}
+		
+		return list;
+	}
+	
+
+	
 	/**
 	 * get port number by certain string input
 	 * @param request - string indicating which port you want
@@ -103,10 +213,20 @@ public class Sysctrl {
 		return portsMap.get(request);
 	}
 	
-	//added by Reggie
+
+	/**
+	 * getNumberOfElevators() returns the number of elevators in the system
+	 * 
+	 * @return - int - number of elevators
+	 */
 	public int getNumberOfElevators() {
 		return portsMap.get("#_OF_ELEVATORS");
 	}
+	/**
+	 * getNumberOfFloors() returns the number of floors in the system
+	 * 
+	 * @return - int - number of floors in system
+	 */
 	public int getNumberOfFloors() {
 		return portsMap.get("#_OF_FLOORS");
 	}

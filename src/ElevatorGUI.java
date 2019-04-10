@@ -1,16 +1,17 @@
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
-
 import javax.swing.*;
 
 /**
  * 
  * 
  * 
- * @author reginaldpradel
+ * 
  *
  */
-public class ElevatorGUI extends JFrame {
+public class ElevatorGUI extends JFrame implements ActionListener {
 
 	private JLabel currentFloor;
 	private ArrayList<JButton> buttons;
@@ -20,13 +21,13 @@ public class ElevatorGUI extends JFrame {
 	private JLabel speed;
 	
 	private JLabel direction;
+	
+	static Sysctrl sysctrl;
 
-
+	
 	
 	
 	/**
-	 * 
-	 * 
 	 * 
 	 * 
 	 * @param numberOfFloors
@@ -34,8 +35,9 @@ public class ElevatorGUI extends JFrame {
 	public ElevatorGUI(int numberOfFloors) {
 		
 		//this should be set by Elevator
-		this.currentFloor = new JLabel("1");
-		
+		this.currentFloor = new JLabel("");
+			
+		//----------BUTTON PAD------------------
 		//list of the buttons
 		this.buttons = new ArrayList<JButton>();
 		
@@ -48,12 +50,9 @@ public class ElevatorGUI extends JFrame {
 		//buttons for opening and closing doors
 		this.add(new JButton("OPEN"));
 		this.add(new JButton("CLOSE"));
-
 		
 		//grid layout 10 rows by 3 column
 	    this.setLayout(new GridLayout(10,3));
-		
-	   
 	    
 		//make buttons visible
 	    this.pack();
@@ -61,6 +60,12 @@ public class ElevatorGUI extends JFrame {
 	    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 	    this.add(currentFloor);
+	    //-------------END OF ELEVATOR CAR VIEW------------------
+	    
+	    
+	    
+	    
+	    
 		
 	}
 	
@@ -78,8 +83,43 @@ public class ElevatorGUI extends JFrame {
 	public static void main(String[] args) {
 		
 		// create the GUI
-		ElevatorGUI eButtonPad = new ElevatorGUI(22);
+		//ElevatorGUI eButtonPad = new ElevatorGUI(22);
 		
+		//Location of elevators and floors
+		//JPanel simView = new JPanel();
+		//simView.setLayout(new GridLayout(sysctrl.getNumberOfElevators(),sysctrl.getNumberOfFloors()));
+		
+		//simView.add(comp)
+		
+		
+	}
+	
+	public void setFloorLabel(int floor) {
+		this.currentFloor = new JLabel(Integer.toString(floor));
+	}
+	
+	
+	/*
+	 * Elevator button lamps 
+	 **/
+	public void pressButton(JButton b) {
+		b.setBackground(Color.yellow); 
+	}
+	
+	public void resetButton(JButton b) {
+		b.setBackground(null); 
+	}
+	
+	public void requestFloor(int floor) {
+		pressButton(buttons.get(floor-1));
+	}
+	
+	public void arriveToFloor(int floor) {
+		resetButton(buttons.get(floor-1));
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
 		
 	}
 

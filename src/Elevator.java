@@ -1,30 +1,22 @@
-/***
- * Elevator class represents the elevator car object 
- * in the Elevator system simulation
- * 
- * ElevatorSubsystem will hold an ArrayList of Elevators
- * 
- * @author Reginald Pradel
- * 
- */
-
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-/**
- * Elevator class represent the elevator car object.
+/***
+ * Elevator class represents the elevator car object 
+ * in the Elevator system simulation. Elevators will be passed their requests 
+ * from the ElevatorSubsystem who communicates directly with the Scheduler
+ * via DatagramSockets
  * 
- * The Elevator Subsystem will contain a list of Elevators
+ * ElevatorSubsystem contains an ArrayList of Elevators
+ * 
+ * @author Reginald Pradel
  * 
  */
 public class Elevator implements Runnable{
 
-    //Attribute of an Elevator Car
+    //Attributes of an Elevator
 
-    
-    
-    
 
     /*
      * 
@@ -56,7 +48,7 @@ public class Elevator implements Runnable{
     private ArrayList<Floor> pickUpList,dropOffList;
     
     
-    private DatagramSocket receiveSocket,sendSocket;
+    private DatagramSocket elevatorSocket,sendSocket;
     private int portNumber;
     
     // Utility class ; handles conversions object <--> bytes <--> string
@@ -81,32 +73,60 @@ public class Elevator implements Runnable{
     //Elevator Car Panel
     private ElevatorCarPanel carPanel;
 
-    
+    //static port map
+     static Sysctrl sysctrl;
     
 
     /**
      * Constructor used to create an object of type Elevator
+     * @throws SocketException 
      */
-    public Elevator(int elevatorID, int startingFloor) {
+    public Elevator(int elevatorID, int startingFloor) throws SocketException {
         
         this.elevatorID = elevatorID;
 
         this.currentFloor = startingFloor;
 
         this.elevatorDoor = new Door(false);
+        this.motor = new Motor();
         
+        this.pickUpList = new ArrayList<Floor>();
+        this.dropOffList = new ArrayList<Floor>();
+
         
-        this.status = new RedefinedStatus(elevatorID, startingFloor, true, false);
+        this.status = new RedefinedStatus(elevatorID, startingFloor, true, false, false, false);
         
+        //port number
+        portNumber = 5500+elevatorID;//sysctrl.getPort("ElevatorBasePort");
+       //INIT this elevator's socket
+		
+        elevatorSocket = new DatagramSocket(portNumber);
+		
 
 
         //Utitly class for converting into and from bytes
         this.systemControl = new Sysctrl();
+        
     }
     
-    
-   
+    /**
+     * Method that receives the request from Scheduler
+     * @throws IOException 
+     */
+    private void receive_assignment() throws IOException {
+		DatagramPacket request = null;
+		
+		elevatorSocket.receive(request);
+		
+		Person p = sysctrl.convertBytesToPerson(request.getData());
+		//add Request to Lists
+		passengers.add(p);
+		pickUpList.add(new Floor(p.getOriginFloor()));
+		dropOffList.add(new Floor(p.getDestFloor()));
 
+		
+	}
+    
 
     /** 
      * 
@@ -125,11 +145,14 @@ public class Elevator implements Runnable{
 	private void announceFloor() {
 		if(currentFloor == 1)
 			System.out.println(currentFloor + "st FLOOR");
+		
 		else if(currentFloor == 2)
 			System.out.println(currentFloor + "nd FLOOR");
+		
 		else if(currentFloor == 3) {
 			System.out.println(currentFloor + "rd FLOOR");
 		}
+		
 		else 
 			System.out.println(currentFloor + "th FLOOR");
 		
@@ -344,13 +367,56 @@ public class Elevator implements Runnable{
     public ArrayList<Floor> getDropOffList(){
     	return this.dropOffList;
     }
-       
+      /**********************************************************************/ 
 
     
     /**
-     * RUN
+     * RUN the Elevator Car
      */
     public void run() {
+    	
+    	
+    	while(true) {
+    		
+    		System.out.println("Elevator #"+elevatorID+": waiting...");
+    		
+    		while(pickUpList.isEmpty() || dropOffList.isEmpty()) {
+    			//spin wait
+    		}
+    		
+    		
+    		//update status of elevator
+        	this.status = new RedefinedStatus(this.elevatorID,currentFloor,motor.getDirection(),elevatorDoor.isOpen(),status.isBusy(),status.isOffline());
+        	
+    		while(!pickUpList.isEmpty() || !dropOffList.isEmpty()) {
+    			
+    			//Check if passengers need to enter
+    			for(Floor f: pickUpList) {
+    				if(this.currentFloor == f.getFloorNumber()) {
+    					openDoor();
+    					announceFloor();
+    					closeDoor();
+    				}
+    			}
+    			for(Floor f: dropOffList) {
+    				if(this.currentFloor == f.getFloorNumber()) {
+    					openDoor();
+    					announceFloor();
+    					closeDoor();
+    				}
+    			}
+    			
+    			//Move elevator
+    			move(goingUp);
+    			
+    			
+    		}
+    		//go back down to floor #1 and set this elevator to not busy
+    		if(pickUpList.isEmpty() && currentFloor>1)
+    			move(goingUp=false);
+    			this.status.setBusy(false);
+    		
+    	}
     	
     }
 }

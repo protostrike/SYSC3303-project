@@ -63,59 +63,71 @@ public class Person  implements Serializable{
 		this.faultLocation = faultLoc;
 	}
 
-	//////////////	ACCESSOR AND MUTATOR METHODS	/////////////////
+	//////////////	ACCESSOR METHODS /////////////////
 	
 	
 	public Calendar getTimes() {
-		return times;
-	}
-
-	public void setTimes(Calendar times) {
-		this.times = times;
+		return this.times;
 	}
 	
 	public String getTime() {
-		return time;
+		return this.time;
+	}
+	
+	public int getOriginFloor() {
+		return this.originFloor;
+	}
+	
+	public int getDestFloor() {
+		return this.destFloor;
+	}
+	
+	public boolean isUp() {
+		return this.up;
+	}
+	
+	public int getFaultType() {
+		return this.faultType;
+	}
+	
+	public int getFaultLocation() {
+		return this.faultLocation;
+	}
+	
+	
+	////////////// MUTATOR METHODS	/////////////////
+
+	public void setTimes(Calendar times) {
+		this.times = times;
 	}
 
 	public void setTime(String time) {
 		this.time = time;
 	}
-
-	public int getOriginFloor() {
-		return originFloor;
-	}
-
+	
 	public void setOriginFloor(int originFloor) {
 		this.originFloor = originFloor;
 	}
-
-	public int getDestFloor() {
-		return destFloor;
-	}
-
+	
 	public void setDestFloor(int destFloor) {
 		this.destFloor = destFloor;
 	}
 
-	public boolean isUp() {
-		return up;
-	}
-
+	
 	public void setUp(boolean up) {
 		this.up = up;
 	}
 	/////////////////////////////////////
 	
-
 	/**
 	 * toString() represents the person's data as a string
 	 */
-	public String toString()
-	{
-		return time + " Origin: "+ originFloor + " Dest: " + destFloor + " Going: " + (up?"Going Up":"Going Down");
+	public String toString() {
+		return this.time +" "+ Integer.toString(originFloor) +" "+(up?"up":"down")+" "+ Integer.toString(destFloor) +" "+ Integer.toString(faultType) +" "+ Integer.toString(faultLocation);
 
 	}
+	
+	
 
 
 

@@ -9,7 +9,7 @@ import java.util.*;
  * The Floor system manages the floor side interactions
  * of the Elevator Simulation
  */
-public class FloorSubsystem extends Thread implements Runnable {
+public class FloorSubsystem implements Runnable {
 
 	//Attributes of the Floor Subsystem
 	
@@ -83,62 +83,46 @@ public class FloorSubsystem extends Thread implements Runnable {
 		//fault injection
 		int faultCode, faultLocation;
 		
-		try {
-			x = new Scanner(f);
-		}
-		catch(Exception e) {
-			sysctrl.printLog("File doesnt exist");
-		}
-
-		//while there is still text in the data.txt
-		while (x.hasNext()) {   
+		
+		
+		//Takes text file contents and 
+		BufferedReader input = new BufferedReader(new FileReader(f));
+		String line;
+		
+		while((line = input.readLine()) != null) {
+			String data[]=line.split(" ");
 			
-			//PARSE text file to get:
+			//prepare request info
+			time = data[0];
+			originFloor = Integer.parseInt(data[1]);
 			
-			//the time of the request
-			time = x.next();
+			if(data[2].equals("up")) {wantsToGoUp = true;}
+			else {wantsToGoUp = false;}
 			
-			//the starting floor of the request
-			originFloor = Integer.parseInt(x.next());
+			destinationFloor = Integer.parseInt(data[3]);
 			
-			//the direction of travel
-			upOrDownPressed  = x.next();
-			
-			//parse to get the destination
-			destinationFloor = Integer.parseInt(x.next());
-			
-			//parse to get the fault code of the request
-			faultCode = Integer.parseInt(x.next());
-
-			//parse to get the floor where the fault will occur
-			faultLocation = Integer.parseInt(x.next());
+			faultCode = Integer.parseInt(data[4]);
+			faultLocation = Integer.parseInt(data[5]);
 			
 			
-			//Sets the direction of travel of request
-			if(upOrDownPressed.equals("up")) {
-				wantsToGoUp = true;
-			}
-			else {
-				wantsToGoUp = false;
-			}
-
-			//Create person object who holds request info
+			//create person
 			Person p = new Person( time, originFloor, destinationFloor, wantsToGoUp, faultCode, faultLocation);
-
+			
 			
 			//add request to appropriate Floor object
+			
 			//NOTE: *** index in list is floor#-1 ***
 			floors.get(originFloor-1).getRequests().add(p);
 			
 			//Floor containing request sends to Scheduler
 			floors.get(originFloor-1).sendRequestToScheduler(p);
 			
-
 		}//end of while loop
 		
+		input.close();
+
 	}
-	
-	
+		
 			////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////
@@ -157,7 +141,6 @@ public class FloorSubsystem extends Thread implements Runnable {
 	 */
 	public static void main( String args[] ) throws IOException {
 
-		
 		now = Calendar.getInstance();
         now.set(Calendar.HOUR, 0);
         now.set(Calendar.MINUTE, 0);
@@ -167,10 +150,12 @@ public class FloorSubsystem extends Thread implements Runnable {
 		
 		//We can change the number of Floors in the system 
 		//using the parameter in FloorSubsystem constructor
-		Thread f = new FloorSubsystem();
+		
+		//Thread f = new FloorSubsystem();
 		
 		//START runnable FloorSubsystem
-		f.start();
+		
+		//f.start();
 	}
 	
 	/**
