@@ -98,7 +98,7 @@ public class ElevatorSubsystem {
 		status.motorOn=false;
 		synchronized(status.pickUpList) {
 			status.pickUpList.clear();
-			status.requests.clear();
+			//status.requests.clear();
 			}
 		status.fault=1;
 	}
@@ -114,7 +114,7 @@ public class ElevatorSubsystem {
 		System.out.println("Elevator"+elNumber+": door stuck on floor "+status.currentFloor);
 		synchronized(status.pickUpList) {
 			status.pickUpList.clear();
-			status.requests.clear();
+			//status.requests.clear();
 			}
 		status.fault=1;
 
@@ -379,7 +379,7 @@ public class ElevatorSubsystem {
 	private  void moveElevator() {
 	
 		
-		if (status.currentFloor==errFloor) {
+		if (status.currentFloor==errFloor) {	// check for error
 			chooseFault(errType);
 		}
 		
@@ -415,7 +415,7 @@ public class ElevatorSubsystem {
 				else if (!status.up && status.motorOn)
 					moveDown();
 				
-				if (status.currentFloor==errFloor) {
+				if (status.currentFloor==errFloor) {	// check for error after elevator has moved
 					chooseFault(errType);
 				}
 		}
