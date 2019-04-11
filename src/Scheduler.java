@@ -281,51 +281,58 @@ public class Scheduler {
 	 */
 
 		private int determineElevator(Person person) {
-			int selectedEl=0;
+			int selectedEl=10;
+			boolean flag = false;
 			
 			Map<Integer,ElevatorStatus> statusList = new HashMap<Integer,ElevatorStatus>();
+			Map<Integer,Integer> elevatorDistance = new HashMap<Integer,Integer>();
 			
 			for (int i: elevatorStatuses.keySet()) {
 				if (elevatorStatuses.get(i).fault==0) 
 					statusList.put(i, elevatorStatuses.get(i));
 			}
 			
+			
 			System.out.println(statusList);
 			for (int i: statusList.keySet()){
 				ElevatorStatus e = statusList.get(i);
 
+				//if the request is on the way up
 				if(e.inUse && e.up && person.originFloor > e.currentFloor && person.destFloor > person.originFloor )
 				{
 					selectedEl = i;
+					flag = true;
 					break;
 				}
+				//if requests is on the way down
 				if(e.inUse && !e.up && person.originFloor < e.currentFloor && person.destFloor < person.originFloor)
 				{
+					flag = true;
 					selectedEl = i;
 					break;
 				}
-				else if(! e.inUse)
+				if(! e.inUse)
 				{
-					System.out.println("i is:" + i);
-					selectedEl = i;
-				//if (e.up &&person.originFloor>e.currentFloor) {
-					//selectedEl=i;
-					break;
+					elevatorDistance.put(i, Math.abs(e.currentFloor-person.originFloor));
+					System.out.println("i="+ i + " diff==" + Math.abs(e.currentFloor-person.originFloor));
 				}
 			}
-			/*
-				else if (!e.up && person.originFloor<e.currentFloor ) {
-					selectedEl= i;
-					break;
+			System.out.println("flag is:" + flag);
+			System.out.println(elevatorDistance);
+			int distance = 100;
+			if(!flag)
+			{
+				for (int i: elevatorDistance.keySet())
+				{
+					if(elevatorDistance.get(i) < distance)
+					{
+						selectedEl= i;
+						distance = elevatorDistance.get(i);
+					}
+					
 				}
-				else if (person.originFloor==e.currentFloor) {
-					selectedEl = i;
-					break;
-				}
-				
-				}*/
-			
-			
+			}
+			elevatorDistance = null;
 			
 			g.updateRequests(selectedEl, person.toString());
 			g.repaint();

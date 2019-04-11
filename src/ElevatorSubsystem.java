@@ -400,6 +400,7 @@ public class ElevatorSubsystem {
 					}
 				}
 				dropOffPerson();
+				status.inUse = false;
 				turnLampOff(dest);
 				
 		}
