@@ -8,7 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import sun.awt.SunHints.Value;
+//import sun.awt.SunHints.Value;
 
 /**
  * The Scheduler is responsible for routing each elevator 
@@ -28,6 +28,7 @@ public class Scheduler {
 	Map<Integer, ElevatorStatus> elevatorStatuses = new HashMap<Integer, ElevatorStatus>();
 	
 
+	//command bytes for the evelator
 	byte[] statusByte = {(byte)0};
 	byte[] moveUpCommandByte = {(byte)1};
 	byte[] moveDownCommandByte = {(byte)2};
@@ -55,7 +56,7 @@ public class Scheduler {
 			elevatorStatuses.put(i, new ElevatorStatus());
 		}
 		
-		
+		//Construct the GUI for all elevators
 		for (int i: elevatorStatuses.keySet()) {
 		g.updateGrid(i, elevatorStatuses.get(i).currentFloor);
 		}
@@ -95,13 +96,8 @@ public class Scheduler {
 		Thread requestWaiter = new Thread() {
 			
 			public void run() {
-				//synchronized (personList) {
 				while(true) {
-						waitForRequest();
-					//	personList.notifyAll();
-						//System.out.println("Notified");
-						
-			//	}
+						waitForRequest();						
 				}
 				
 			}
@@ -130,6 +126,7 @@ public class Scheduler {
 			}
 		};
 	
+		//Start the three threads to updateStatus, handle Requests and wait for requests
 		statusUpdater.start();
 		requestHandler.start();
 		requestWaiter.start();
@@ -177,9 +174,8 @@ public class Scheduler {
 		
 		} 
 	
-
+	//Wait for elevator status update
 	private void waitForStatus() {
-		//Wait for elevator status update
 		byte[] data = new byte[1000];
 		DatagramPacket esPacket = new DatagramPacket(data, data.length);
 
@@ -205,7 +201,7 @@ public class Scheduler {
 		} 
 	
 	
-
+	// Update the status of Elevator
 	private void updateStatus(ElevatorStatus es, int port) {
 		for(int i = 1; i <= sysctrl.numElevators; i ++) {
 			if(sysctrl.getPort("Elevator"+i) == port) {
@@ -217,9 +213,7 @@ public class Scheduler {
 					g.repaint();
 					
 				}
-				
-				
-				if (!es.requests.isEmpty() && es.fault==1) {
+					if (!es.requests.isEmpty() && es.fault==1) {
 					
 					for (int q: es.requests.keySet()) {
 						for (int z=0;z<es.requests.get(q).size();z++)
@@ -237,9 +231,6 @@ public class Scheduler {
 	 */
 	private void handleRequest() {
 		
-		
-
-	
 		synchronized (personList) {
 			while (personList.isEmpty()) {
 		try {
@@ -297,36 +288,58 @@ public class Scheduler {
 	 */
 
 		private int determineElevator(Person person) {
-			int selectedEl=0;
+			int selectedEl=10;
+			boolean flag = false;
 			
 			Map<Integer,ElevatorStatus> statusList = new HashMap<Integer,ElevatorStatus>();
+			Map<Integer,Integer> elevatorDistance = new HashMap<Integer,Integer>();
 			
 			for (int i: elevatorStatuses.keySet()) {
 				if (elevatorStatuses.get(i).fault==0) 
 					statusList.put(i, elevatorStatuses.get(i));
 			}
 			
-		
+			
+			System.out.println(statusList);
 			for (int i: statusList.keySet()){
 				ElevatorStatus e = statusList.get(i);
 
-				
-				if (e.up &&person.originFloor>e.currentFloor) {
-					selectedEl=i;
-				break;
-			}
-				else if (!e.up && person.originFloor<e.currentFloor ) {
-					selectedEl= i;
+				//if the request is on the way up
+				if(e.inUse && e.up && person.originFloor > e.currentFloor && person.destFloor > person.originFloor )
+				{
+					selectedEl = i;
+					flag = true;
 					break;
 				}
-				else if (person.originFloor==e.currentFloor) {
+				//if requests is on the way down
+				if(e.inUse && !e.up && person.originFloor < e.currentFloor && person.destFloor < person.originFloor)
+				{
+					flag = true;
 					selectedEl = i;
 					break;
 				}
-				
+				if(! e.inUse)
+				{
+					elevatorDistance.put(i, Math.abs(e.currentFloor-person.originFloor));
+					System.out.println("i="+ i + " diff==" + Math.abs(e.currentFloor-person.originFloor));
 				}
-			
-			
+			}
+			System.out.println("flag is:" + flag);
+			System.out.println(elevatorDistance);
+			int distance = 100;
+			if(!flag)
+			{
+				for (int i: elevatorDistance.keySet())
+				{
+					if(elevatorDistance.get(i) < distance)
+					{
+						selectedEl= i;
+						distance = elevatorDistance.get(i);
+					}
+					
+				}
+			}
+			elevatorDistance = null;
 			
 			g.updateRequests(selectedEl, person.toString());
 			g.repaint();
@@ -339,7 +352,7 @@ public class Scheduler {
 	
 }
 
-
+// The Runnable class to handle different persons
 class PersonHandler implements Runnable
 {
 	private Scheduler scheduler;

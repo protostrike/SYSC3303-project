@@ -172,26 +172,36 @@ public class ElevatorStatus implements Serializable{
 
 	
 	public int getFarthestDestination() {
+		int farthest =0;
 		if(up) {
-			int count = 0;
-			for(int  p : pickUpList) {
-				if(p >= count)
-					count = p;
+			for (int i: requests.keySet()) {
+				if (currentFloor<i ) {
+					if (i>farthest)
+						farthest=i;
 			}
-			return count;
-			
-		}	
-	
-		else {
-			int count = 99;
-			for(int p : pickUpList) {
-				if(p <= count)
-					count = p;
-			}
-			return count;
+				for (int j=0;j<requests.get(i).size();j++) {
+					if (requests.get(i).get(j)>currentFloor && requests.get(i).get(j)>farthest)
+						farthest=requests.get(i).get(j);
+				}
 			
 		}
+		}
+		else {
+			farthest = pickUpList.get(0);
+			for (int i: requests.keySet()) {
+				if (currentFloor>i ) {
+					if (i<farthest)
+						farthest=i;
+			}
+				for (int j=0;j<requests.get(i).size();j++) {
+					if (requests.get(i).get(j)>currentFloor && requests.get(i).get(j)<farthest)
+						farthest=requests.get(i).get(j);
+				}
+		}
+		}
 		
+		
+		return farthest;
 		
 	}
 	
@@ -207,7 +217,7 @@ public class ElevatorStatus implements Serializable{
 	@Override
 	public String toString() {
 		return "ElevatorStatus [currentFloor=" + currentFloor + ", motorOn=" + motorOn + ", up=" + up + ", inUse="
-				+ inUse + "]";
+				+ inUse + "]" + requests;
 	}
 
 

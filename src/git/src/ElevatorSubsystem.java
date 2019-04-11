@@ -72,38 +72,6 @@ public class ElevatorSubsystem {
 
 		}
 		
-	
-		/*
-		
-		Thread elevatorThread,elevatorThread2,e3,e4;
-		ElevatorSubsystem c = new ElevatorSubsystem(sysctrl.getPort("Elevator1"));
-		ElevatorSubsystem c2 = new ElevatorSubsystem(sysctrl.getPort("Elevator2"));
-		ElevatorHandler elevatorHandler = new ElevatorHandler(c);
-		ElevatorHandler elevatorHandler2 = new ElevatorHandler(c2);
-		elevatorThread = new Thread(elevatorHandler, "New request");
-		elevatorThread2 = new Thread(elevatorHandler2, "New request");
-		
-		ElevatorSubsystem c3 = new ElevatorSubsystem(sysctrl.getPort("Elevator3"));
-		ElevatorHandler elevatorHandler3 = new ElevatorHandler(c3);
-		e3 = new Thread(elevatorHandler3, "New request");
-		
-		ElevatorSubsystem c4 = new ElevatorSubsystem(sysctrl.getPort("Elevator4"));
-		ElevatorHandler elevatorHandler4 = new ElevatorHandler(c4);
-		e4= new Thread(elevatorHandler4, "New request");
-		
-		
-		
-		
-		elevatorThread.setPriority(10);
-		elevatorThread2.setPriority(1);
-		
-		elevatorThread.start();
-		elevatorThread2.start();
-		e3.start();
-		e4.start();
-		*/
-		
-		
 	}
 
 
@@ -130,7 +98,7 @@ public class ElevatorSubsystem {
 		status.motorOn=false;
 		synchronized(status.pickUpList) {
 			status.pickUpList.clear();
-			//status.requests.clear();
+			status.requests.clear();
 			}
 		status.fault=1;
 	}
@@ -146,7 +114,7 @@ public class ElevatorSubsystem {
 		System.out.println("Elevator"+elNumber+": door stuck on floor "+status.currentFloor);
 		synchronized(status.pickUpList) {
 			status.pickUpList.clear();
-			//status.requests.clear();
+			status.requests.clear();
 			}
 		status.fault=1;
 
@@ -161,13 +129,6 @@ public class ElevatorSubsystem {
 			doorStuck();
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
 	private void dropOffPerson() {
 	synchronized (status.pickUpList) {
 		Iterator<Integer> iter = status.pickUpList.iterator();
@@ -179,9 +140,7 @@ public class ElevatorSubsystem {
 		        	status.requests.remove(p);
 		        }
 		    }
-		}
-		
-		
+		}		
 	}
 
 		    stopElevator();
@@ -189,19 +148,13 @@ public class ElevatorSubsystem {
 			openDoor();
 		    //System.out.println("Elevator" +elNumber+": "+" Person dropped off");
 			closeDoor();
+			status.inUse = false;
 			duration = System.currentTimeMillis()-start;
 			if (duration>3000) {
 				sysctrl.printLog("FAULT DETECTED");
 			}
-			}
+		}
 		
-		
-		
-		
-		
-		
-	
-	
 	/**
 	 * Moves the elevator UPWARDS by ONE floor
 	 */
@@ -209,8 +162,7 @@ public class ElevatorSubsystem {
 		
 		status.motorOn = true;
 		status.currentFloor++;
-		System.out.println("Elevator" +elNumber+": "+ " Going up: floor "+status.currentFloor);
-		
+		System.out.println("Elevator" +elNumber+": "+ " Going up: floor "+status.currentFloor);		
 		
 	}
 	
@@ -223,12 +175,7 @@ public class ElevatorSubsystem {
 		System.out.println("Elevator" +elNumber+": "+ " Going down: floor "+status.currentFloor);
 	}
 	
-	/**
-	 * announceFloor is a method that announces the floor upon arriving
-	 */
 
-	
-	
 	/**
 	 * OPENS the elevator doors
 	 */
@@ -263,32 +210,7 @@ public class ElevatorSubsystem {
 	 * ADDS Persons on floor going SAME DIRECTION as elevator 
 	 */
 	/*
-	private void pickUpPerson() {
 		
-		//iterate through all requests assigned to this elevator
-		
-		Iterator<Integer> iter = status.pickUp.iterator();
-		while (iter.hasNext()) {
-			
-		    int p = iter.next();
-		    if (p == status.currentFloor) {
-		        iter.remove();
-		    stopElevator();
-			start = System.currentTimeMillis();
-			openDoor();
-		    System.out.println("Elevator" +elNumber+": "+" Person picked up");
-			closeDoor();
-			duration = System.currentTimeMillis()-start;
-			if (duration>3000) {
-				sysctrl.printLog("FAULT DETECTED");
-			}
-			}
-		}
-		
-		
-	}
-	*/
-	
 	/**
 	 * turnLampOn is a method that
 	 * 
@@ -309,7 +231,7 @@ public class ElevatorSubsystem {
 	 * to the ELEVATOR subsystem cars
 	 */
 	
-	
+	// Run this Thread
 	public void run () {
 	
 		Thread getRequestThread = new Thread() {
@@ -361,9 +283,7 @@ public class ElevatorSubsystem {
 				addRequestToList(data);
 				
 				status.pickUpList.notifyAll();
-			}
-			
-			
+			}			
 	}
 		
 	
@@ -375,8 +295,6 @@ public class ElevatorSubsystem {
 	 * @param data - DatagramPacket data
 	 */
 	private void addRequestToList(byte[] data) {
-
-
 		
 		try {
 			//convert request data into Person
@@ -451,15 +369,8 @@ public class ElevatorSubsystem {
 			if (duration>5000) {								// IF ELEVATOR TAKES MORE THAN 5 SECONDS TO MOVE AGAIN, THERE IS A FAULT
 				sysctrl.printLog("FAULT DETECTED");
 			}
-			
-	
-		
-		
 		}
 	
-	
-
-
 	/**
 	 * moveElevator is a method that will dictate where the elevator will move 
 	 */
@@ -475,6 +386,7 @@ public class ElevatorSubsystem {
 		else {
 		int dest = -1;
 		status.setMotorOn(true);
+		status.inUse = true;
 		dest = getNearestPickup();	// get closest floor to elevator
 		if (status.currentFloor>dest)	// if dest is under elevator go down
 			status.up = false;		
@@ -488,6 +400,7 @@ public class ElevatorSubsystem {
 					}
 				}
 				dropOffPerson();
+				status.inUse = false;
 				turnLampOff(dest);
 				
 		}
@@ -526,33 +439,7 @@ public class ElevatorSubsystem {
 	 * decideNearestRequest finds the nearest destination in the same direction as status.up
 	 * and sets the request as the FRONT of the pickUpList
 	 */
-	/*
-	private void decideNearestRequest() {
-		int count = 99;
-		Person person = new Person();
-		
-		for(Person p : pickUpList) {
-			//If distance is closer
-			if(Math.abs(status.getCurrentFloor() - p.getOriginFloor()) <= count) {
-				count = Math.abs(status.getCurrentFloor() - p.getOriginFloor());
-				person = p;
-			}
-		}
-		
-		turnLampOn(person.destFloor);
-		
-		//Now that we have found the nearest request
-		//Set is as the head of the list
-		try {
-		
-			int index = pickUpList.indexOf(person);
-			pickUpList.add(pickUpList.remove(index));
-		} 
-		catch (NullPointerException e) {
-			sysctrl.printLog("Error: Cannot find person in request List");
-		}
-	}
-	*/
+	
 	public int getNearestPickup() {				// gets closest destination according to elevators current floor
 		synchronized (status.pickUpList) {
 			int smallestDistanceUp=1000,floorUp=-1;
@@ -586,24 +473,10 @@ public class ElevatorSubsystem {
 		
 		}
 	}
-		
-	
-	/*
-	public int getNearestDropOff() {
-		int result=100;
-		for(int p : status.dropOff) {
-			if (p<result)
-				result = p;
-			}				
-		return result;
-		
-	}
-	*/
-	
-	
+
 	
 	/**
-	 * 
+	 * Updates the status of elevator to scheduler
 	 */
 	private void updateStatusToScheduler() {
 // after elevator moves, sends an updated status to scheduler
@@ -633,7 +506,7 @@ public class ElevatorSubsystem {
 
 /**
  * 
- *
+ *	Handles the Elevator
  */
 class ElevatorHandler implements Runnable
 {
@@ -643,6 +516,7 @@ class ElevatorHandler implements Runnable
 	}
 
 	@Override
+	//Run the ElevatorHandler thread
 	public void run() {			
 		elevatorSubsystem.run();
 

@@ -54,7 +54,7 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 			}
 			
 			
-			for (int i=0;i<sysctrl.numElevators;i++) {
+			for (int i=0;i<=sysctrl.numElevators;i++) {
 			
 			JLabel l= new JLabel("Elevator"+(i+1));
 		    Dimension size = l.getPreferredSize();
@@ -66,7 +66,7 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 				for (int j=0;j<requests.get(i).size();j++) {
 					JLabel a = new JLabel(requests.get(i).get(j));
 					Dimension size2 = a.getPreferredSize();
-					a.setBounds(50+sysctrl.numElevators*50+ 90*(i-1),20+ 20*(j+1),size2.width,size2.height);
+					a.setBounds(50+sysctrl.numElevators*50+ 90*(i-1),20+ 20*(j)+1,size2.width,size2.height);
 					this.add(a);
 				}
 			}
