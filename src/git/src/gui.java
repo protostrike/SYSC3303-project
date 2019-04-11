@@ -13,9 +13,9 @@ Map<Integer,Integer> colored = new HashMap<Integer,Integer>();
 Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>();
 	public gui() {
 		
-		
+		//this.setLayout(null);
 		this.setTitle("Scheduler");
-		this.setSize((100*sysctrl.numElevators)+sysctrl.numElevators*50,50+sysctrl.numFloors * 50);
+		this.setSize(50+sysctrl.numElevators*50 +90*(sysctrl.numElevators) ,50+sysctrl.numFloors * 50);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setResizable(false);
 		this.setVisible(true);
@@ -34,11 +34,13 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 		
 		
 		public void paintComponent(Graphics g) {
+			removeAll();
+			super.paintComponents(g);
 			g.setColor(Color.DARK_GRAY);
 			g.fillRect(0,0,50+sysctrl.numElevators*50,50+sysctrl.numFloors * 50);
 			for (int i=0; i<sysctrl.numElevators;i++) {
 				g.setColor(Color.DARK_GRAY);
-				g.drawLine(200+ 90*(i+1), 0, 200+ 90*(i+1), 50+sysctrl.numFloors * 50);
+				g.drawLine(50+sysctrl.numElevators*50+ 90*(i+1), 0, 50+sysctrl.numElevators*50+ 90*(i+1), 50+sysctrl.numFloors * 50);
 				for (int j=0;j<sysctrl.numFloors;j++) {
 					g.setColor(Color.gray);
 					for (int z:colored.keySet()) {
@@ -56,7 +58,7 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 			
 			JLabel l= new JLabel("Elevator"+(i+1));
 		    Dimension size = l.getPreferredSize();
-			l.setBounds(220+ 90*(i),10,size.width,size.height);
+			l.setBounds(50+sysctrl.numElevators*50+ 90*(i),10,size.width,size.height);
 			this.add(l);
 			
 			
@@ -64,12 +66,13 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 				for (int j=0;j<requests.get(i).size();j++) {
 					JLabel a = new JLabel(requests.get(i).get(j));
 					Dimension size2 = a.getPreferredSize();
-					a.setBounds(220+ 90*(i-1),20+ 20*(j+1),size2.width,size2.height);
+					a.setBounds(50+sysctrl.numElevators*50+ 90*(i-1),20+ 20*(j+1),size2.width,size2.height);
 					this.add(a);
 				}
 			}
 			
 		}
+			
 		}
 		
 		
