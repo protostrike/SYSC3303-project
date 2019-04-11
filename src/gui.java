@@ -13,7 +13,7 @@ Map<Integer,Integer> colored = new HashMap<Integer,Integer>();
 Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>();
 	public gui() {
 		
-		
+		//this.setLayout(null);
 		this.setTitle("Scheduler");
 		this.setSize(50+sysctrl.numElevators*50 +90*(sysctrl.numElevators) ,50+sysctrl.numFloors * 50);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -34,6 +34,8 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 		
 		
 		public void paintComponent(Graphics g) {
+			removeAll();
+			super.paintComponents(g);
 			g.setColor(Color.DARK_GRAY);
 			g.fillRect(0,0,50+sysctrl.numElevators*50,50+sysctrl.numFloors * 50);
 			for (int i=0; i<sysctrl.numElevators;i++) {
@@ -70,6 +72,7 @@ Map<Integer,ArrayList<String>> requests = new HashMap<Integer,ArrayList<String>>
 			}
 			
 		}
+			
 		}
 		
 		
